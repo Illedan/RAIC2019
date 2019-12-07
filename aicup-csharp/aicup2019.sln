@@ -1,0 +1,17 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aicup2019", "aicup2019.csproj", "{867A5C13-6225-41A9-8DAA-F11B656A9101}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{867A5C13-6225-41A9-8DAA-F11B656A9101}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{867A5C13-6225-41A9-8DAA-F11B656A9101}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{867A5C13-6225-41A9-8DAA-F11B656A9101}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{867A5C13-6225-41A9-8DAA-F11B656A9101}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
