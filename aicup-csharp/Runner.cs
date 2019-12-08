@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using AiCup2019.Model;
 
 namespace AiCup2019
 {

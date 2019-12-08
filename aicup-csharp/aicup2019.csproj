@@ -5,4 +5,26 @@
         <TargetFramework>netcoreapp2.1</TargetFramework>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Folder Include="Strategy\" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Remove="CopyCode\bin\Debug\netcoreapp3.0\CopyCode" />
+      <None Remove="CopyCode\obj\Debug\netcoreapp3.0\CopyCode.csprojAssemblyReference.cache" />
+      <None Remove="CopyCode\obj\CopyCode.csproj.nuget.dgspec.json" />
+      <None Remove="CopyCode\obj\Debug\netcoreapp3.0\CopyCode.assets.cache" />
+      <None Remove="CopyCode\obj\Debug\netcoreapp3.0\CopyCode.AssemblyInfoInputs.cache" />
+      <None Remove="CopyCode\obj\Debug\netcoreapp3.0\CopyCode.dll" />
+      <None Remove="CopyCode\obj\Debug\netcoreapp3.0\CopyCode.pdb" />
+      <None Remove="CopyCode\obj\Debug\netcoreapp3.0\CopyCode" />
+      <None Remove="CopyCode\bin\Debug\netcoreapp3.0\CopyCode.runtimeconfig.json" />
+      <None Remove="CopyCode\bin\Debug\netcoreapp3.0\CopyCode.runtimeconfig.dev.json" />
+      <None Remove="CopyCode\bin\Debug\netcoreapp3.0\CopyCode.dll" />
+      <None Remove="CopyCode\bin\Debug\netcoreapp3.0\CopyCode.pdb" />
+      <None Remove="CopyCode\obj\Debug\netcoreapp3.0\CopyCode.csproj.FileListAbsolute.txt" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="CopyCode\Program.cs" />
+      <Compile Remove="CopyCode\obj\Debug\netcoreapp3.0\CopyCode.AssemblyInfo.cs" />
+    </ItemGroup>
 </Project>

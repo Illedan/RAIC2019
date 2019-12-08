@@ -1,6 +1,8 @@
-using AiCup2019.Model;
+using static AiCup2019.Model.CustomData;
+using aicup2019.Strategy;
+using System.Linq;
 
-namespace AiCup2019
+namespace AiCup2019.Model
 {
     public class MyStrategy
     {
@@ -8,8 +10,12 @@ namespace AiCup2019
         {
             return (a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y);
         }
+
+        public static Debug Debug;
+
         public UnitAction GetAction(Unit unit, Game game, Debug debug)
         {
+            Debug = debug;
             Unit? nearestEnemy = null;
             foreach (var other in game.Units)
             {
@@ -41,7 +47,6 @@ namespace AiCup2019
             {
                 targetPos = nearestEnemy.Value.Position;
             }
-            debug.Draw(new CustomData.Log("Target pos: " + targetPos));
             Vec2Double aim = new Vec2Double(0, 0);
             if (nearestEnemy.HasValue)
             {
@@ -63,8 +68,18 @@ namespace AiCup2019
             action.Aim = aim;
             action.Shoot = true;
             action.Reload = false;
-            action.SwapWeapon = false;
+            action.SwapWeapon = true;
             action.PlantMine = false;
+            var myGame = new MyGame(game);
+            foreach (var bullet in myGame.Bullets)
+            {
+                var start = bullet.Bullet.Position;
+                var end = myGame.CalcBulletEnd(bullet);
+                var sFloat = new Vec2Float((float)start.X, (float)start.Y);
+                var eFloat = new Vec2Float((float)end.X, (float)end.Y);
+                debug.Draw(new Line(sFloat, eFloat, 0.3f, new ColorFloat(0, 0, 0, 1)));
+            }
+
             return action;
         }
     }
