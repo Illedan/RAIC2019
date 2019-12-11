@@ -14,7 +14,8 @@ namespace aicup2019.Strategy
         public List<MyBullet> Bullets = new List<MyBullet>();
         public List<MyUnit> Units = new List<MyUnit>();
         public int Width, Height;
-        public MyGame(Game game)
+        public Player MePlayer, EnemyPlayer;
+        public MyGame(Game game, Unit me)
         {
             s = Stopwatch.StartNew();
             Game = game;
@@ -22,9 +23,31 @@ namespace aicup2019.Strategy
             Height = Game.Level.Tiles[0].Length;
             Units.AddRange(game.Units.Select(u => new MyUnit(u)));
             Bullets.AddRange(game.Bullets.Select(b => new MyBullet(b)));
+            MePlayer = game.Players.First(p => p.Id == me.PlayerId);
+            EnemyPlayer = game.Players.First(p => p.Id != me.PlayerId);
         }
 
+        public MyUnit Enemy(MyUnit u) => Units.First(en => en.Unit.PlayerId != u.Unit.PlayerId);
+
         public Game Game;
+
+        public int[] GetHeights()
+        {
+            var heights = new int[Width];
+            for(var x = 0; x < Width; x++)
+            {
+                for(var y = 1; y < Height; y++)
+                {
+                    var tile = Game.Level.Tiles[x][y];
+                    if(tile != Tile.Wall && Game.Level.Tiles[x][y-1] == Tile.Wall)
+                    {
+                        heights[x] = y;
+                        break;
+                    }
+                }
+            }
+            return heights;
+        }
 
         public bool OnBoard(double x, double y) => OnBoard((int)x, (int)y);
 
@@ -37,24 +60,29 @@ namespace aicup2019.Strategy
         {
             return Game.Level.Tiles[(int)x][(int)y];
         }
-        public static Vec2Double NextPos;
-        public Vec2Float CalcBulletEnd(MyBullet bullet)
+
+
+        public Vec2Float CalcBulletEnd(MyBullet bullet, out bool didHit)
         {
             var potentialUnits = Units.Where(u => u.Unit.Id != bullet.Bullet.UnitId).ToArray();
             var pos = new Vec2Double(bullet.Bullet.Position.X, bullet.Bullet.Position.Y);
             var speed = bullet.Bullet.Velocity;
-            speed = new Vec2Double(speed.X / 60.0 / 100.0, speed.Y / 60.0 / 100.0);
+            var ticks = Const.Properties.TicksPerSecond;
+            speed = new Vec2Double(speed.X / ticks, speed.Y / ticks);
             var i = 0;
+            didHit = false;
             while (true)
             {
                 pos = new Vec2Double(pos.X + speed.X, pos.Y + speed.Y);
-                if (i == 101) NextPos = pos;
                 if (!OnBoard(pos.X, pos.Y)) break;
                 var rect = Rect.FromMovingBullet(pos, bullet.Bullet.Size);
-                var didHit = false;
                 foreach (var u in potentialUnits)
                 {
-                    if (u.Size.Overlapping(rect)) didHit = true;
+                    if (u.Size.Overlapping(rect))
+                    {
+                        didHit = true;
+                        break;
+                    }
                 }
 
                 if (didHit) break;
@@ -64,7 +92,7 @@ namespace aicup2019.Strategy
                 i++;
             }
 
-            MyStrategy.Debug.Draw(new Log("TIME: " + s.ElapsedMilliseconds));
+            //MyStrategy.Debug.Draw(new Log("TIME: " + s.ElapsedMilliseconds));
             return new Vec2Float((float)pos.X, (float)pos.Y);
         }
     }

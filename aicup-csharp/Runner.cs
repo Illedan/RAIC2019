@@ -5,6 +5,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using AiCup2019.Model;
+using System.Threading;
 
 namespace AiCup2019
 {
@@ -49,10 +50,20 @@ namespace AiCup2019
         }
         public static void Main(string[] args)
         {
-            string host = args.Length < 1 ? "127.0.0.1" : args[0];
-            int port = args.Length < 2 ? 31001 : int.Parse(args[1]);
-            string token = args.Length < 3 ? "0000000000000000" : args[2];
-            new Runner(host, port, token).Run();
+            while (true)
+            {
+                try
+                {
+
+                    string host = args.Length < 1 ? "127.0.0.1" : args[0];
+                    int port = args.Length < 2 ? 31001 : int.Parse(args[1]);
+                    string token = args.Length < 3 ? "0000000000000000" : args[2];
+                    new Runner(host, port, token).Run();
+                }catch(Exception e)
+                {
+                    break; //Thread.Sleep(1000);
+                }
+            }
         }
     }
 }
