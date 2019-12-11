@@ -1,16 +1,16 @@
 using System;
 using AiCup2019.Model;
+using aicup2019.Strategy.Services;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using static AiCup2019.Model.CustomData;
 using aicup2019.Strategy;
 using AiCup2019;
-using aicup2019.Strategy.Services;
 using static AiCup2019.Model.Item;
 
 
- // LastEdited: 11/12/2019 17:27 
+ // LastEdited: 11/12/2019 19:33 
 
 
 namespace aicup2019.Strategy
@@ -52,6 +52,18 @@ namespace aicup2019.Strategy
         public double Dist(MyPosition p2) => Math.Sqrt(Pow(X - p2.X) + Pow(Y - p2.Y));
 
         public double Pow(double x) => x * x;
+
+        public Vec2Double CreateVec => new Vec2Double(X, Y);
+        public Vec2Float CreateFloatVec => CreateVec.Conv();
+
+        public MyPosition MoveTowards(MyPosition pos, double speed)
+        {
+            var dist = Dist(pos);
+            if (dist < 0.1) return pos;
+            var dx = (pos.X - X) / dist * speed;
+            var dy = (pos.Y - Y) / dist * speed;
+            return new MyPosition(X + dx, Y + dy);
+        }
     }
 }
 
@@ -274,7 +286,7 @@ public class MyStrategy
                 if (pos.X < unit.Position.X) targetPos = new Vec2Double(unit.Position.X - game.Properties.UnitMaxHorizontalSpeed, pos.Y);
                 else targetPos = new Vec2Double(unit.Position.X + game.Properties.UnitMaxHorizontalSpeed, pos.Y);
             }
-            else if(myGame.MePlayer.Score > myGame.EnemyPlayer.Score)
+            else if(myGame.MePlayer.Score > myGame.EnemyPlayer.Score || (myGame.MePlayer.Score == myGame.EnemyPlayer.Score && game.CurrentTick > 300))
             {
                 var target = heightPositions.Where(h => h.Y > myGame.Height/2).OrderByDescending(p => p.Dist(enemy.Center) - me.Center.Dist(p)/2)?.FirstOrDefault();
                 if(target == null) target = heightPositions.OrderByDescending(p => p.Dist(enemy.Center)).FirstOrDefault();
@@ -326,8 +338,10 @@ public class MyStrategy
         {
             var sFloat = new Vec2Float((float)(x), (float)heights[x]);
             var eFloat = new Vec2Float((float)(x+1), (float)heights[x]);
-            debug.Draw(new Line(sFloat, eFloat, 0.1f, new ColorFloat(1, 0, 0, 1)));
+           //debug.Draw(new Line(sFloat, eFloat, 0.1f, new ColorFloat(1, 0, 0, 1)));
         }
+
+        debug.Draw(new Line(aim.Conv(), me.Center.CreateFloatVec, 0.1f, new ColorFloat(1, 0, 0, 1)));
         Debug.Draw(new Log("Spread: " + (unit.Weapon.HasValue?unit.Weapon.Value.Spread:0) + " MAG: " + (unit.Weapon.HasValue ? unit.Weapon.Value.Magazine : 0) + " Reload: " + reload));
         UnitAction action = new UnitAction();
         action.Velocity = targetPos.X - unit.Position.X;
@@ -352,9 +366,9 @@ public class MyStrategy
 }
 namespace aicup2019.Strategy.Services
 {
-    public static class AngleService
+    public static class UselessExtensions
     {
-
+        public static Vec2Float Conv(this Vec2Double from) => new Vec2Float(Convert.ToSingle(from.X), Convert.ToSingle(from.Y));
     }
 }
 namespace aicup2019.Strategy.Services
@@ -405,6 +419,25 @@ namespace aicup2019.Strategy.Services
             if (!CanShoot(me.Center, enemy.Center, game, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
             if (!CanShoot(me.Center, enemy.Top, game, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
             return true;
+        }
+    }
+}
+namespace aicup2019.Strategy.Services
+{
+    public static class WalkService
+    {
+        public static MyPosition FindWalkTarget(MyGame game, MyUnit me, MyUnit enemy)
+        {
+
+        }
+    }
+}
+namespace aicup2019.Strategy.Services
+{
+    public class AimService
+    {
+        public AimService()
+        {
         }
     }
 }

@@ -37,8 +37,8 @@ namespace aicup2019.Strategy.Services
 
         public static bool CanPotentiallyShoot(MyUnit me, MyUnit enemy, MyGame game)
         {
-            if (!me.Unit.Weapon.HasValue) return false;
-            if (me.Unit.Weapon.Value.Spread > 0.1 && me.Center.Dist(enemy.Center) > 5) return false;
+            if (!me.HasWeapon) return false;
+            if (me.Unit.Weapon.Value.Spread > me.Unit.Weapon.Value.Parameters.MinSpread && me.Center.Dist(enemy.Center) > 3) return false;
             if(me.Unit.Weapon.Value.Typ == WeaponType.RocketLauncher)
             {
                 if (!CanShoot(me.Center, enemy.Bottom, game, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;

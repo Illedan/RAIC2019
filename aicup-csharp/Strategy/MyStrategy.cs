@@ -19,11 +19,11 @@ public class MyStrategy
 
     public UnitAction GetAction(Unit unit, Game game, AiCup2019.Debug debug)
     {
-
         Const.Properties = game.Properties;
         Debug = debug;
-        Unit? nearestEnemy = null;
         var myGame = new MyGame(game, unit);
+
+        Unit? nearestEnemy = null;
         var me = myGame.Units.First(u => u.Unit.Id == unit.Id);
         var enemy = myGame.Enemy(me);
 
@@ -70,7 +70,7 @@ public class MyStrategy
                 if (pos.X < unit.Position.X) targetPos = new Vec2Double(unit.Position.X - game.Properties.UnitMaxHorizontalSpeed, pos.Y);
                 else targetPos = new Vec2Double(unit.Position.X + game.Properties.UnitMaxHorizontalSpeed, pos.Y);
             }
-            else if(myGame.MePlayer.Score > myGame.EnemyPlayer.Score)
+            else if(myGame.MePlayer.Score > myGame.EnemyPlayer.Score || (myGame.MePlayer.Score == myGame.EnemyPlayer.Score && game.CurrentTick > 300))
             {
                 var target = heightPositions.Where(h => h.Y > myGame.Height/2).OrderByDescending(p => p.Dist(enemy.Center) - me.Center.Dist(p)/2)?.FirstOrDefault();
                 if(target == null) target = heightPositions.OrderByDescending(p => p.Dist(enemy.Center)).FirstOrDefault();
@@ -122,8 +122,10 @@ public class MyStrategy
         {
             var sFloat = new Vec2Float((float)(x), (float)heights[x]);
             var eFloat = new Vec2Float((float)(x+1), (float)heights[x]);
-            debug.Draw(new Line(sFloat, eFloat, 0.1f, new ColorFloat(1, 0, 0, 1)));
+           //debug.Draw(new Line(sFloat, eFloat, 0.1f, new ColorFloat(1, 0, 0, 1)));
         }
+
+        debug.Draw(new Line(aim.Conv(), me.Center.CreateFloatVec, 0.1f, new ColorFloat(1, 0, 0, 1)));
         Debug.Draw(new Log("Spread: " + (unit.Weapon.HasValue?unit.Weapon.Value.Spread:0) + " MAG: " + (unit.Weapon.HasValue ? unit.Weapon.Value.Magazine : 0) + " Reload: " + reload));
         UnitAction action = new UnitAction();
         action.Velocity = targetPos.X - unit.Position.X;

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Diagnostics;
 using System;
 using static AiCup2019.Model.CustomData;
+using static AiCup2019.Model.Item;
 
 namespace aicup2019.Strategy
 {
@@ -15,6 +16,7 @@ namespace aicup2019.Strategy
         public List<MyUnit> Units = new List<MyUnit>();
         public int Width, Height;
         public Player MePlayer, EnemyPlayer;
+        public MyUnit Me, Enemy;
         public MyGame(Game game, Unit me)
         {
             s = Stopwatch.StartNew();
@@ -25,11 +27,31 @@ namespace aicup2019.Strategy
             Bullets.AddRange(game.Bullets.Select(b => new MyBullet(b)));
             MePlayer = game.Players.First(p => p.Id == me.PlayerId);
             EnemyPlayer = game.Players.First(p => p.Id != me.PlayerId);
+            Me = Units.First(u => u.Unit.Id == me.Id);
+            Enemy = Units.OrderBy(u => u.Center.Dist(Me.Center)).First(u => u.Unit.PlayerId != me.PlayerId);
         }
 
-        public MyUnit Enemy(MyUnit u) => Units.First(en => en.Unit.PlayerId != u.Unit.PlayerId);
+        public int ScoreDiff => MePlayer.Score - EnemyPlayer.Score;
+        public bool HasHealing => HealthPacks.Any();
+
+        public IEnumerable<MyPosition> HealthPacks => Game.LootBoxes.Where(l => l.Item is HealthPack).Select(h => new MyPosition(h.Position));
+
+        public IEnumerable<LootBox> Weapons => Game.LootBoxes.Where(l => l.Item is Item.Weapon);
 
         public Game Game;
+
+        public int GetHeight(double x0, double x1, double y)
+        {
+            var x = (int)x0;
+            var x2 = (int)x1;
+            for(var i = (int)y; i >= 0; i--)
+            {
+                if (Game.Level.Tiles[x][i] == Tile.Wall) return i + 1;
+                if (Game.Level.Tiles[x2][i] == Tile.Wall) return i + 1;
+            }
+
+            return 0;
+        }
 
         public int[] GetHeights()
         {
@@ -92,7 +114,6 @@ namespace aicup2019.Strategy
                 i++;
             }
 
-            //MyStrategy.Debug.Draw(new Log("TIME: " + s.ElapsedMilliseconds));
             return new Vec2Float((float)pos.X, (float)pos.Y);
         }
     }
