@@ -31,6 +31,8 @@ namespace aicup2019.Strategy
             Enemy = Units.OrderBy(u => u.Center.Dist(Me.Center)).First(u => u.Unit.PlayerId != me.PlayerId);
         }
 
+        public int XDiff => Me.Center.X < Enemy.Center.X ? 1 : -1;
+        public double TargetDist => Me.Center.Dist(Enemy.Center);
         public int ScoreDiff => MePlayer.Score - EnemyPlayer.Score;
         public bool HasHealing => HealthPacks.Any();
 

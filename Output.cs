@@ -1,16 +1,16 @@
-using System;
 using AiCup2019.Model;
+using System;
 using aicup2019.Strategy.Services;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using static AiCup2019.Model.CustomData;
+using static AiCup2019.Model.Item;
 using aicup2019.Strategy;
 using AiCup2019;
-using static AiCup2019.Model.Item;
 
 
- // LastEdited: 11/12/2019 19:33 
+ // LastEdited: 12/12/2019 0:55 
 
 
 namespace aicup2019.Strategy
@@ -26,14 +26,31 @@ namespace aicup2019.Strategy
         public MyPosition Center => new MyPosition(Unit.Position.X, Unit.Position.Y + Unit.Size.Y / 2);
         public MyPosition Top => new MyPosition(Unit.Position.X, Unit.Position.Y + Unit.Size.Y);
         public MyPosition Bottom => new MyPosition(Unit.Position.X, Unit.Position.Y);
+        public MyPosition LeftCorner => new MyPosition(Unit.Position.X - Unit.Size.X, Unit.Position.Y);
         public Unit Unit { get; }
         public Rect Size;
+        public bool HasWeapon => Unit.Weapon.HasValue;
+        public AiCup2019.Model.Weapon Weapon => Unit.Weapon.Value;
+        public int Health => Unit.Health;
+        public int MaxHealth => Const.Properties.UnitMaxHealth;
+        public bool ShouldHeal => Health < MaxHealth * 0.7;
+
+        public MyPosition GetEndPos(MyGame game)
+        {
+            var height = game.GetHeight(Size.X1, Size.X2, Bottom.Y);
+            var heightPos = new MyPosition(Unit.Position.X, height);
+            var dist = Bottom.Dist(heightPos);
+            if (dist > 1 + Const.Properties.UnitSize.Y / 2) return new MyPosition(Unit.Position.X, Unit.Position.Y - 1);
+            if (game.Me.HasWeapon && game.Me.Weapon.Typ == WeaponType.RocketLauncher)
+                return heightPos;
+            return heightPos.MoveTowards(game.Enemy.Center, Const.Properties.UnitSize.Y / 2);
+        }
     }
 }
 
 namespace aicup2019.Strategy
 {
-    public struct MyPosition
+    public class MyPosition
     {
         public double X, Y;
 
@@ -63,6 +80,13 @@ namespace aicup2019.Strategy
             var dx = (pos.X - X) / dist * speed;
             var dy = (pos.Y - Y) / dist * speed;
             return new MyPosition(X + dx, Y + dy);
+        }
+
+        public MyPosition MoveTowards(double angle, double speed)
+        {
+            var dx = Math.Cos(angle);
+            var dy = Math.Sin(angle);
+            return new MyPosition(dx * speed + X, dy * speed + Y);
         }
     }
 }
@@ -126,6 +150,7 @@ namespace aicup2019.Strategy
         public List<MyUnit> Units = new List<MyUnit>();
         public int Width, Height;
         public Player MePlayer, EnemyPlayer;
+        public MyUnit Me, Enemy;
         public MyGame(Game game, Unit me)
         {
             s = Stopwatch.StartNew();
@@ -136,11 +161,33 @@ namespace aicup2019.Strategy
             Bullets.AddRange(game.Bullets.Select(b => new MyBullet(b)));
             MePlayer = game.Players.First(p => p.Id == me.PlayerId);
             EnemyPlayer = game.Players.First(p => p.Id != me.PlayerId);
+            Me = Units.First(u => u.Unit.Id == me.Id);
+            Enemy = Units.OrderBy(u => u.Center.Dist(Me.Center)).First(u => u.Unit.PlayerId != me.PlayerId);
         }
 
-        public MyUnit Enemy(MyUnit u) => Units.First(en => en.Unit.PlayerId != u.Unit.PlayerId);
+        public int XDiff => Me.Center.X < Enemy.Center.X ? 1 : -1;
+        public double TargetDist => Me.Center.Dist(Enemy.Center);
+        public int ScoreDiff => MePlayer.Score - EnemyPlayer.Score;
+        public bool HasHealing => HealthPacks.Any();
+
+        public IEnumerable<MyPosition> HealthPacks => Game.LootBoxes.Where(l => l.Item is HealthPack).Select(h => new MyPosition(h.Position));
+
+        public IEnumerable<LootBox> Weapons => Game.LootBoxes.Where(l => l.Item is Item.Weapon);
 
         public Game Game;
+
+        public int GetHeight(double x0, double x1, double y)
+        {
+            var x = (int)x0;
+            var x2 = (int)x1;
+            for(var i = (int)y; i >= 0; i--)
+            {
+                if (Game.Level.Tiles[x][i] == Tile.Wall) return i + 1;
+                if (Game.Level.Tiles[x2][i] == Tile.Wall) return i + 1;
+            }
+
+            return 0;
+        }
 
         public int[] GetHeights()
         {
@@ -203,7 +250,6 @@ namespace aicup2019.Strategy
                 i++;
             }
 
-            //MyStrategy.Debug.Draw(new Log("TIME: " + s.ElapsedMilliseconds));
             return new Vec2Float((float)pos.X, (float)pos.Y);
         }
     }
@@ -225,133 +271,38 @@ namespace aicup2019.Strategy
 
 public class MyStrategy
 {
-    // Simuler
-    static double DistanceSqr(Vec2Double a, Vec2Double b)
-    {
-        return (a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y);
-    }
-
     public static AiCup2019.Debug Debug;
 
     public UnitAction GetAction(Unit unit, Game game, AiCup2019.Debug debug)
     {
-
         Const.Properties = game.Properties;
         Debug = debug;
-        Unit? nearestEnemy = null;
         var myGame = new MyGame(game, unit);
-        var me = myGame.Units.First(u => u.Unit.Id == unit.Id);
-        var enemy = myGame.Enemy(me);
+        var me = myGame.Me;
+        var aim = AimService.GetAimTarget(myGame);
+        var shoot = ShootService.ShouldShoot(myGame, aim);
+        var walkTarget = WalkService.FindWalkTarget(myGame);
+        var jump = JumpService.GetDir(myGame, walkTarget);
 
-        var heights = myGame.GetHeights();
-        int xx = 0;
-        var heightPositions = heights.Select(h => new MyPosition(xx++, h)).ToList();
-
-        foreach (var other in game.Units)
-        {
-            if (other.PlayerId != unit.PlayerId)
-            {
-                if (!nearestEnemy.HasValue || DistanceSqr(unit.Position, other.Position) < DistanceSqr(unit.Position, nearestEnemy.Value.Position))
-                {
-                    nearestEnemy = other;
-                }
-            }
-        }
-        LootBox? nearestWeapon = null;
-        foreach (var lootBox in game.LootBoxes)
-        {
-            if (lootBox.Item is Item.Weapon)
-            {
-                if (!nearestWeapon.HasValue || DistanceSqr(unit.Position, lootBox.Position) < DistanceSqr(unit.Position, nearestWeapon.Value.Position))
-                {
-                    nearestWeapon = lootBox;
-                }
-            }
-        }
-        Vec2Double targetPos = unit.Position;
-
-        var healthBox = game.LootBoxes.Where(l => l.Item is HealthPack).OrderBy(l => me.Center.Dist(new MyPosition(l.Position))).FirstOrDefault();
-
-        if (!unit.Weapon.HasValue && nearestWeapon.HasValue)
-        {
-            var pos = nearestWeapon.Value.Position;
-            if (pos.X < unit.Position.X) targetPos = new Vec2Double(unit.Position.X - game.Properties.UnitMaxHorizontalSpeed, pos.Y);
-            else targetPos = new Vec2Double(unit.Position.X + game.Properties.UnitMaxHorizontalSpeed, pos.Y);
-        }
-        else if (nearestEnemy.HasValue)
-        {
-            if(me.Unit.Health < Const.Properties.UnitMaxHealth && game.LootBoxes.Contains(healthBox))
-            {
-                var pos = healthBox.Position;
-                if (pos.X < unit.Position.X) targetPos = new Vec2Double(unit.Position.X - game.Properties.UnitMaxHorizontalSpeed, pos.Y);
-                else targetPos = new Vec2Double(unit.Position.X + game.Properties.UnitMaxHorizontalSpeed, pos.Y);
-            }
-            else if(myGame.MePlayer.Score > myGame.EnemyPlayer.Score || (myGame.MePlayer.Score == myGame.EnemyPlayer.Score && game.CurrentTick > 300))
-            {
-                var target = heightPositions.Where(h => h.Y > myGame.Height/2).OrderByDescending(p => p.Dist(enemy.Center) - me.Center.Dist(p)/2)?.FirstOrDefault();
-                if(target == null) target = heightPositions.OrderByDescending(p => p.Dist(enemy.Center)).FirstOrDefault();
-                targetPos = new Vec2Double(target.Value.X, target.Value.Y + 100);
-            }
-            else
-            {
-                targetPos = new Vec2Double(nearestEnemy.Value.Position.X, nearestEnemy.Value.Position.Y+100);
-            }
-        }
-        Vec2Double aim = new Vec2Double(0, 0);
-        if (nearestEnemy.HasValue)
-        {
-            var dist = enemy.Center.Dist(me.Center);
-            Debug.Draw(new Log("DIST: " + dist));
-            if(dist < 3)
-            {
-                aim = new Vec2Double(enemy.Center.X - unit.Position.X, enemy.Center.Y - unit.Position.Y);
-            }
-            else
-            {
-                var target = heightPositions.OrderBy(h => h.Dist(enemy.Center)).First();
-                aim = new Vec2Double(target.X - unit.Position.X, target.Y - unit.Position.Y);
-            }
-        }
-        bool jump = targetPos.Y > unit.Position.Y;
-        if (targetPos.X > unit.Position.X && game.Level.Tiles[(int)(unit.Position.X + 1)][(int)(unit.Position.Y)] == Tile.Wall)
-        {
-            jump = true;
-        }
-        if (targetPos.X < unit.Position.X && game.Level.Tiles[(int)(unit.Position.X - 1)][(int)(unit.Position.Y)] == Tile.Wall)
-        {
-            jump = true;
-        }
-        var shoot = false;
-        var reload = false;
-        if(myGame.Units.Count > 1)
-        {
-            shoot = ShootService.CanPotentiallyShoot(me, enemy, myGame);
-            if(!shoot && 
-                me.Unit.Weapon.HasValue &&
-                 me.Unit.Weapon.Value.Magazine < me.Unit.Weapon.Value.Parameters.MagazineSize*0.3)
-            {
-                reload = true;
-            }
-        }
-
-        for(var x = 0; x < heights.Length; x++) 
-        {
-            var sFloat = new Vec2Float((float)(x), (float)heights[x]);
-            var eFloat = new Vec2Float((float)(x+1), (float)heights[x]);
-           //debug.Draw(new Line(sFloat, eFloat, 0.1f, new ColorFloat(1, 0, 0, 1)));
-        }
-
-        debug.Draw(new Line(aim.Conv(), me.Center.CreateFloatVec, 0.1f, new ColorFloat(1, 0, 0, 1)));
-        Debug.Draw(new Log("Spread: " + (unit.Weapon.HasValue?unit.Weapon.Value.Spread:0) + " MAG: " + (unit.Weapon.HasValue ? unit.Weapon.Value.Magazine : 0) + " Reload: " + reload));
+       // debug.Draw(new Line(aim.CreateFloatVec, me.Center.CreateFloatVec, 0.05f, new ColorFloat(1, 0, 0, 1)));
+        //debug.Draw(new Line(walkTarget.CreateFloatVec, me.Center.CreateFloatVec, 0.1f, new ColorFloat(0, 0.5f, 0, 1)));
+        //  Debug.Draw(new Log("Spread: " + (unit.Weapon.HasValue?unit.Weapon.Value.Spread:0) + " MAG: " + (unit.Weapon.HasValue ? unit.Weapon.Value.Magazine : 0) + " Reload: " + reload));
         UnitAction action = new UnitAction();
-        action.Velocity = targetPos.X - unit.Position.X;
-        action.Jump = jump;
-        action.JumpDown = !jump;
-        action.Aim = aim;
+        action.Velocity =me.Center.X < walkTarget.X ? game.Properties.UnitMaxHorizontalSpeed : -game.Properties.UnitMaxHorizontalSpeed;
+        action.Jump = jump > 0;
+        action.JumpDown = jump < 0;
+        action.Aim = new Vec2Double(aim.X - me.Center.X, aim.Y - me.Center.Y);
         action.Shoot = shoot;
-        action.Reload = reload;
-        action.SwapWeapon = !unit.Weapon.HasValue || unit.Weapon.Value.Typ != WeaponType.AssaultRifle;
+        action.Reload = me.Center.Dist(myGame.Enemy.Center) > 5 && me.HasWeapon && me.Weapon.Magazine < me.Weapon.Parameters.MagazineSize*0.3;
+        action.SwapWeapon = !unit.Weapon.HasValue || me.HasWeapon && me.Weapon.Magazine < me.Weapon.Parameters.MagazineSize * 0.3;
         action.PlantMine = false;
+
+        var spread = AimService.GetSpread(myGame, aim);
+        foreach(var point in spread)
+        {
+           debug.Draw(new Line(point.CreateFloatVec, me.Center.CreateFloatVec, 0.05f, new ColorFloat(0.1f, 0.1f, 0.4f, 1)));
+        }
+
         foreach (var bullet in myGame.Bullets)
         {
             var start = bullet.Bullet.Position;
@@ -388,28 +339,55 @@ namespace aicup2019.Strategy.Services
 
         public static bool CanShoot(MyPosition startPos, MyPosition endPos, MyGame game, double bulletSpeed)
         {
+            var hitPos = GetHitPos(startPos, endPos, game, bulletSpeed);
+            if(game.Me.Weapon.Typ == WeaponType.RocketLauncher)
+            {
+                var spread = AimService.GetSpread(game, endPos);
+                var posses = spread.Select(s => GetHitPos(startPos, s, game, bulletSpeed)).ToArray();
+                foreach(var p in posses)
+                {
+                    LogService.DrawLine(p, game.Me.Center, 0, 0, 1);
+                }
+                if (posses.Any(p => p.Dist(startPos) < p.Dist(endPos) && p.Dist(endPos) > game.Me.Weapon.Parameters.Explosion.Value.Radius))
+                    return false;
+            }
+
+            return hitPos.Dist(endPos) < 1;
+        }
+
+        public static MyPosition GetHitPos(MyPosition startPos, MyPosition endPos, MyGame game, double bulletSpeed)
+        {
             var dist = endPos.Dist(startPos);
             var time = GetShootTime(dist, bulletSpeed) * Const.Properties.TicksPerSecond;
             var dx = (endPos.X - startPos.X) / time;
             var dy = (endPos.Y - startPos.Y) / time;
             var x = startPos.X;
             var y = startPos.Y;
-            for(var i = 0; i < time-1; i++)
+            for (var i = 0; i < time - 1; i++)
             {
                 x += dx;
                 y += dy;
-                if (!game.OnBoard(x, y)) return false;
+                if (!game.OnBoard(x, y)) return new MyPosition(x, y);
                 var tile = game.GetTile(x, y);
-                if (tile == Tile.Wall) return false;
+                if (tile == Tile.Wall) return new MyPosition(x, y);
             }
 
+            return endPos;
+        }
+
+        public static bool ShouldShoot(MyGame game, MyPosition aimPos)
+        {
+            var me = game.Me;
+            if (!me.HasWeapon) return false;
+            if (me.Unit.Weapon.Value.Spread > me.Unit.Weapon.Value.Parameters.MinSpread + 0.3 && me.Center.Dist(aimPos) > 3) return false;
+            if (!CanShoot(me.Center, aimPos, game, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
             return true;
         }
 
         public static bool CanPotentiallyShoot(MyUnit me, MyUnit enemy, MyGame game)
         {
-            if (!me.Unit.Weapon.HasValue) return false;
-            if (me.Unit.Weapon.Value.Spread > 0.1 && me.Center.Dist(enemy.Center) > 5) return false;
+            if (!me.HasWeapon) return false;
+            if (me.Unit.Weapon.Value.Spread > me.Unit.Weapon.Value.Parameters.MinSpread && me.Center.Dist(enemy.Center) > 3) return false;
             if(me.Unit.Weapon.Value.Typ == WeaponType.RocketLauncher)
             {
                 if (!CanShoot(me.Center, enemy.Bottom, game, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
@@ -422,22 +400,124 @@ namespace aicup2019.Strategy.Services
         }
     }
 }
+
 namespace aicup2019.Strategy.Services
 {
     public static class WalkService
     {
-        public static MyPosition FindWalkTarget(MyGame game, MyUnit me, MyUnit enemy)
+        public static MyPosition GetRealTarget (MyGame game)
         {
+            var me = game.Me;
+            if (!me.HasWeapon) return GetWeapon(game);
+            if (me.ShouldHeal && game.HasHealing) return GetHealing(game);
+            LogService.WriteLine("Diff: " + game.ScoreDiff + " Tick: " + game.Game.CurrentTick + " " + game.Width + " " + game.Height);
+            if (game.ScoreDiff > 0) return Hide(game);
+            if (game.ScoreDiff == 0 && game.Game.CurrentTick < 300 && game.Enemy.HasWeapon) return Hide(game);
+            return Attack(game);
+        }
 
+        public static MyPosition FindWalkTarget(MyGame game)
+        {
+            var target = GetRealTarget(game);
+            LogService.DrawLine(target, game.Me.Bottom, 1, 0, 0);
+            if ((int)target.X == (int)game.Me.Center.X) return target;
+            var diff = game.Me.Center.X < target.X ? 1 : -1;
+            var height = game.GetHeights()[((int)game.Me.Center.X) + diff];
+            if (height > game.Me.Bottom.Y) return new MyPosition(target.X, 50);
+            return target;
+        }
+
+        private static MyPosition GetWeapon(MyGame game)
+        {
+            LogService.WriteLine("WEAPON");
+            return new MyPosition(game.Weapons.OrderBy(p => new MyPosition(p.Position).Dist(game.Me.Center)).First().Position);
+        }
+
+        private static MyPosition GetHealing(MyGame game)
+        {
+            LogService.WriteLine("HEAL");
+            var target = game.HealthPacks.OrderBy(p => p.Dist(game.Me.Center)).FirstOrDefault(h => h.Dist(game.Me.Center) < h.Dist(game.Enemy.Center));
+            if (target == null) return game.HealthPacks.OrderBy(p => p.Dist(game.Me.Center)).First();
+            if ((int)target.X == (int)game.Me.Center.X) return target;
+            return new MyPosition(target.X, 50);
+        }
+
+        private static MyPosition Hide(MyGame game)
+        {
+            LogService.WriteLine("HIDE");
+            var heights = game.GetHeights();
+            int xx = 0;
+            var heightPositions = heights.Select(h => new MyPosition(xx++, h)).ToList();
+            var target = heightPositions.Where(h => h.Y > game.Height / 2).OrderByDescending(p => p.Dist(game.Enemy.Center) - game.Me.Center.Dist(p) / 2).FirstOrDefault();
+            if (target == null) return heightPositions.OrderByDescending(p => p.Dist(game.Enemy.Center) - game.Me.Center.Dist(p) / 2).First();
+            return target;
+        }
+
+        private static MyPosition Attack(MyGame game)
+        {
+            LogService.WriteLine("ATTACK");
+            var heights = game.GetHeights();
+
+            var target = new MyPosition(game.Enemy.Center.X + game.XDiff * -5, game.Me.Center.Y);
+
+            //LogService.DrawLine(game.Me.Center, new MyPosition(game.Me.LeftCorner.X + game.XDiff, heights[(int)(game.Me.LeftCorner.X + game.XDiff*2)]), 1, 1, 1);
+            return target;
+        }
+    }
+}
+
+namespace aicup2019.Strategy.Services
+{
+    public static class LogService
+    {
+        public static void WriteLine(this string line)
+        {
+            MyStrategy.Debug.Draw(new Log(line));
+        }
+
+        public static void DrawLine(MyPosition p1, MyPosition p2, int r, int g, int b)
+        {
+            MyStrategy.Debug.Draw(new Line(p1.CreateFloatVec, p2.CreateFloatVec, 0.1f, new ColorFloat(r, g, b, 1)));
         }
     }
 }
 namespace aicup2019.Strategy.Services
 {
-    public class AimService
+    public static class JumpService
     {
-        public AimService()
+        public static int GetDir(MyGame game, MyPosition target)
         {
+            var me = game.Me;
+            if(game.Me.Bottom.Y < target.Y)
+            {
+                if (me.Unit.JumpState.MaxTime * me.Unit.JumpState.Speed < 2.5) return 0;
+            }
+
+            return game.Me.Bottom.Y < target.Y ? 1 : -1;
+        }
+    }
+}
+namespace aicup2019.Strategy.Services
+{
+    public static class AimService
+    {
+        public static MyPosition GetAimTarget(MyGame game)
+        {
+            if (!game.Me.HasWeapon) return game.Enemy.Center;
+            var dist = game.Me.Center.Dist(game.Enemy.Center);
+            if (dist < 3) return game.Enemy.Center;
+            return game.Enemy.GetEndPos(game);
+        }
+
+        public static MyPosition[] GetSpread(MyGame game, MyPosition aim)
+        {
+            if (!game.Me.HasWeapon) return new MyPosition[0];
+            var me = game.Me;
+            var dist = aim.Dist(me.Center);
+            var angle = Math.Atan2(aim.Y - me.Center.Y, aim.X - me.Center.X);
+            var max = angle + game.Me.Weapon.Spread;
+            var min = angle - game.Me.Weapon.Spread;
+            return new MyPosition[] { me.Center.MoveTowards(max, 20), me.Center.MoveTowards(min, 20) };
         }
     }
 }

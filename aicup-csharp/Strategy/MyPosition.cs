@@ -4,7 +4,7 @@ using aicup2019.Strategy.Services;
 
 namespace aicup2019.Strategy
 {
-    public struct MyPosition
+    public class MyPosition
     {
         public double X, Y;
 
@@ -34,6 +34,13 @@ namespace aicup2019.Strategy
             var dx = (pos.X - X) / dist * speed;
             var dy = (pos.Y - Y) / dist * speed;
             return new MyPosition(X + dx, Y + dy);
+        }
+
+        public MyPosition MoveTowards(double angle, double speed)
+        {
+            var dx = Math.Cos(angle);
+            var dy = Math.Sin(angle);
+            return new MyPosition(dx * speed + X, dy * speed + Y);
         }
     }
 }

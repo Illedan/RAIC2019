@@ -1,5 +1,6 @@
 ﻿using AiCup2019.Model;
 using System;
+using System.Linq;
 namespace aicup2019.Strategy.Services
 {
     public static class ShootService
@@ -17,21 +18,48 @@ namespace aicup2019.Strategy.Services
 
         public static bool CanShoot(MyPosition startPos, MyPosition endPos, MyGame game, double bulletSpeed)
         {
+            var hitPos = GetHitPos(startPos, endPos, game, bulletSpeed);
+            if(game.Me.Weapon.Typ == WeaponType.RocketLauncher)
+            {
+                var spread = AimService.GetSpread(game, endPos);
+                var posses = spread.Select(s => GetHitPos(startPos, s, game, bulletSpeed)).ToArray();
+                foreach(var p in posses)
+                {
+                    LogService.DrawLine(p, game.Me.Center, 0, 0, 1);
+                }
+                if (posses.Any(p => p.Dist(startPos) < p.Dist(endPos) && p.Dist(endPos) > game.Me.Weapon.Parameters.Explosion.Value.Radius))
+                    return false;
+            }
+
+            return hitPos.Dist(endPos) < 1;
+        }
+
+        public static MyPosition GetHitPos(MyPosition startPos, MyPosition endPos, MyGame game, double bulletSpeed)
+        {
             var dist = endPos.Dist(startPos);
             var time = GetShootTime(dist, bulletSpeed) * Const.Properties.TicksPerSecond;
             var dx = (endPos.X - startPos.X) / time;
             var dy = (endPos.Y - startPos.Y) / time;
             var x = startPos.X;
             var y = startPos.Y;
-            for(var i = 0; i < time-1; i++)
+            for (var i = 0; i < time - 1; i++)
             {
                 x += dx;
                 y += dy;
-                if (!game.OnBoard(x, y)) return false;
+                if (!game.OnBoard(x, y)) return new MyPosition(x, y);
                 var tile = game.GetTile(x, y);
-                if (tile == Tile.Wall) return false;
+                if (tile == Tile.Wall) return new MyPosition(x, y);
             }
 
+            return endPos;
+        }
+
+        public static bool ShouldShoot(MyGame game, MyPosition aimPos)
+        {
+            var me = game.Me;
+            if (!me.HasWeapon) return false;
+            if (me.Unit.Weapon.Value.Spread > me.Unit.Weapon.Value.Parameters.MinSpread + 0.3 && me.Center.Dist(aimPos) > 3) return false;
+            if (!CanShoot(me.Center, aimPos, game, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
             return true;
         }
 

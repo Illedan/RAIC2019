@@ -23,6 +23,11 @@
       <None Remove="CopyCode\bin\Debug\netcoreapp3.0\CopyCode.dll" />
       <None Remove="CopyCode\bin\Debug\netcoreapp3.0\CopyCode.pdb" />
       <None Remove="CopyCode\obj\Debug\netcoreapp3.0\CopyCode.csproj.FileListAbsolute.txt" />
+      <None Remove="CopyCode\bin\Debug\netcoreapp3.0\CopyCode.deps.json" />
+      <None Remove="CopyCode\obj\CopyCode.csproj.nuget.g.props" />
+      <None Remove="CopyCode\obj\project.assets.json" />
+      <None Remove="CopyCode\obj\CopyCode.csproj.nuget.cache" />
+      <None Remove="CopyCode\obj\CopyCode.csproj.nuget.g.targets" />
     </ItemGroup>
     <ItemGroup>
       <Compile Remove="CopyCode\Program.cs" />

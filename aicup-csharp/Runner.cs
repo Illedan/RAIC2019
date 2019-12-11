@@ -54,7 +54,6 @@ namespace AiCup2019
             {
                 try
                 {
-
                     string host = args.Length < 1 ? "127.0.0.1" : args[0];
                     int port = args.Length < 2 ? 31001 : int.Parse(args[1]);
                     string token = args.Length < 3 ? "0000000000000000" : args[2];
@@ -64,6 +63,7 @@ namespace AiCup2019
                     break; //Thread.Sleep(1000);
                 }
             }
+            Console.ReadKey(true);
         }
     }
 }
