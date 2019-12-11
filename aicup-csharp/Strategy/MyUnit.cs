@@ -19,7 +19,7 @@ namespace aicup2019.Strategy
         public AiCup2019.Model.Weapon Weapon => Unit.Weapon.Value;
         public int Health => Unit.Health;
         public int MaxHealth => Const.Properties.UnitMaxHealth;
-        public bool ShouldHeal => Health < MaxHealth * 0.7;
+        public bool ShouldHeal => Health < MaxHealth * 0.85;
 
         public MyPosition GetEndPos(MyGame game)
         {

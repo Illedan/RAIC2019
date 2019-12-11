@@ -32,7 +32,7 @@ public class MyStrategy
         action.Aim = new Vec2Double(aim.X - me.Center.X, aim.Y - me.Center.Y);
         action.Shoot = shoot;
         action.Reload = me.Center.Dist(myGame.Enemy.Center) > 5 && me.HasWeapon && me.Weapon.Magazine < me.Weapon.Parameters.MagazineSize*0.3;
-        action.SwapWeapon = !unit.Weapon.HasValue || me.HasWeapon && me.Weapon.Magazine < me.Weapon.Parameters.MagazineSize * 0.3;
+        action.SwapWeapon = SwapService.ShouldSwap(myGame);
         action.PlantMine = false;
 
         var spread = AimService.GetSpread(myGame, aim);

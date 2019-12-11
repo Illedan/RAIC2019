@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System;
 
 namespace aicup2019.Strategy.Services
 {
@@ -10,6 +11,7 @@ namespace aicup2019.Strategy.Services
             if (!me.HasWeapon) return GetWeapon(game);
             if (me.ShouldHeal && game.HasHealing) return GetHealing(game);
             LogService.WriteLine("Diff: " + game.ScoreDiff + " Tick: " + game.Game.CurrentTick + " " + game.Width + " " + game.Height);
+            if(game.TargetDist < 4 && Math.Abs(game.Me.Center.Y-game.Enemy.Center.Y) < 1) return Attack(game);
             if (game.ScoreDiff > 0) return Hide(game);
             if (game.ScoreDiff == 0 && game.Game.CurrentTick < 300 && game.Enemy.HasWeapon) return Hide(game);
             return Attack(game);
@@ -36,7 +38,7 @@ namespace aicup2019.Strategy.Services
         {
             LogService.WriteLine("HEAL");
             var target = game.HealthPacks.OrderBy(p => p.Dist(game.Me.Center)).FirstOrDefault(h => h.Dist(game.Me.Center) < h.Dist(game.Enemy.Center));
-            if (target == null) return game.HealthPacks.OrderBy(p => p.Dist(game.Me.Center)).First();
+            if (target == null) target = game.HealthPacks.OrderBy(p => p.Dist(game.Me.Center)).First();
             if ((int)target.X == (int)game.Me.Center.X) return target;
             return new MyPosition(target.X, 50);
         }
@@ -47,7 +49,7 @@ namespace aicup2019.Strategy.Services
             var heights = game.GetHeights();
             int xx = 0;
             var heightPositions = heights.Select(h => new MyPosition(xx++, h)).ToList();
-            var target = heightPositions.Where(h => h.Y > game.Height / 2).OrderByDescending(p => p.Dist(game.Enemy.Center) - game.Me.Center.Dist(p) / 2).FirstOrDefault();
+            var target = heightPositions.Where(h => h.Y > heights.Max()-2).OrderByDescending(p => p.Dist(game.Enemy.Center) - game.Me.Center.Dist(p) / 2).FirstOrDefault();
             if (target == null) return heightPositions.OrderByDescending(p => p.Dist(game.Enemy.Center) - game.Me.Center.Dist(p) / 2).First();
             return target;
         }
@@ -55,10 +57,10 @@ namespace aicup2019.Strategy.Services
         private static MyPosition Attack(MyGame game)
         {
             LogService.WriteLine("ATTACK");
-            var heights = game.GetHeights();
+           //var heights = game.GetHeights();
 
             var target = new MyPosition(game.Enemy.Center.X + game.XDiff * -5, game.Me.Center.Y);
-
+            if(target.X > game.Width || target.Y < 0) return new MyPosition(game.Enemy.Center.X + game.XDiff * 5, game.Me.Center.Y+50);
             //LogService.DrawLine(game.Me.Center, new MyPosition(game.Me.LeftCorner.X + game.XDiff, heights[(int)(game.Me.LeftCorner.X + game.XDiff*2)]), 1, 1, 1);
             return target;
         }
