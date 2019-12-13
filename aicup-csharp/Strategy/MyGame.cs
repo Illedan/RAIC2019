@@ -82,6 +82,7 @@ namespace aicup2019.Strategy
 
         public Tile GetTile(double x, double y)
         {
+            if ((int)x >= Width || x < 0 || y < 0 || (int)y >= Width) return Tile.Wall;
             return Game.Level.Tiles[(int)x][(int)y];
         }
 

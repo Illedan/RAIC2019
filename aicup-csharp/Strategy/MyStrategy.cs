@@ -33,7 +33,7 @@ public class MyStrategy
         action.Shoot = shoot;
         action.Reload = me.Center.Dist(myGame.Enemy.Center) > 5 && me.HasWeapon && me.Weapon.Magazine < me.Weapon.Parameters.MagazineSize*0.3;
         action.SwapWeapon = SwapService.ShouldSwap(myGame);
-        action.PlantMine = false;
+        action.PlantMine = myGame.Me.Center.Dist(myGame.Enemy.Center) < 3;
 
         var spread = AimService.GetSpread(myGame, aim);
         foreach(var point in spread)

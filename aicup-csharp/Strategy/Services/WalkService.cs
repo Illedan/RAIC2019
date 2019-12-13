@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System;
+using AiCup2019.Model;
 
 namespace aicup2019.Strategy.Services
 {
@@ -9,11 +10,14 @@ namespace aicup2019.Strategy.Services
         {
             var me = game.Me;
             if (!me.HasWeapon) return GetWeapon(game);
+            var weaps = game.Weapons.Where(w => (w.Item as Item.Weapon).WeaponType == WeaponType.RocketLauncher).ToList();
+            if (me.Weapon.Typ != AiCup2019.Model.WeaponType.RocketLauncher && weaps.Any(w => me.Center.Dist(new MyPosition(w.Position)) < 4)) return new MyPosition(weaps.First(w => me.Center.Dist(new MyPosition(w.Position)) < 4).Position);
+            if (me.Weapon.FireTimer > 0.2 && game.Me.Center.Dist(game.Enemy.Center) < 3) return Hide(game);
             if (me.ShouldHeal && game.HasHealing) return GetHealing(game);
             LogService.WriteLine("Diff: " + game.ScoreDiff + " Tick: " + game.Game.CurrentTick + " " + game.Width + " " + game.Height);
             if(game.TargetDist < 4 && Math.Abs(game.Me.Center.Y-game.Enemy.Center.Y) < 1) return Attack(game);
             if (game.ScoreDiff > 0) return Hide(game);
-            if (game.ScoreDiff == 0 && game.Game.CurrentTick < 300 && game.Enemy.HasWeapon) return Hide(game);
+           // if (game.ScoreDiff == 0 && game.Game.CurrentTick < 300 && game.Enemy.HasWeapon) return Hide(game);
             return Attack(game);
         }
 
@@ -22,6 +26,8 @@ namespace aicup2019.Strategy.Services
             var target = GetRealTarget(game);
             LogService.DrawLine(target, game.Me.Bottom, 1, 0, 0);
             if ((int)target.X == (int)game.Me.Center.X) return target;
+            if (game.GetTile(target.X - 1, target.Y) == AiCup2019.Model.Tile.JumpPad) target = new MyPosition(target.X + 0.5, target.Y);
+            else if (game.GetTile(target.X + 1, target.Y) == AiCup2019.Model.Tile.JumpPad) target = new MyPosition(target.X - 0.5, target.Y);
             var diff = game.Me.Center.X < target.X ? 1 : -1;
             var height = game.GetHeights()[((int)game.Me.Center.X) + diff];
             if (height > game.Me.Bottom.Y) return new MyPosition(target.X, 50);
@@ -39,8 +45,7 @@ namespace aicup2019.Strategy.Services
             LogService.WriteLine("HEAL");
             var target = game.HealthPacks.OrderBy(p => p.Dist(game.Me.Center)).FirstOrDefault(h => h.Dist(game.Me.Center) < h.Dist(game.Enemy.Center));
             if (target == null) target = game.HealthPacks.OrderBy(p => p.Dist(game.Me.Center)).First();
-            if ((int)target.X == (int)game.Me.Center.X) return target;
-            return new MyPosition(target.X, 50);
+            return target;
         }
 
         private static MyPosition Hide(MyGame game)
@@ -49,7 +54,7 @@ namespace aicup2019.Strategy.Services
             var heights = game.GetHeights();
             int xx = 0;
             var heightPositions = heights.Select(h => new MyPosition(xx++, h)).ToList();
-            var target = heightPositions.Where(h => h.Y > heights.Max()-2).OrderByDescending(p => p.Dist(game.Enemy.Center) - game.Me.Center.Dist(p) / 2).FirstOrDefault();
+            var target = heightPositions.Where(h => h.Y > heights.Min()+1).OrderByDescending(p => p.Dist(game.Enemy.Center) - game.Me.Center.Dist(p) / 2).FirstOrDefault();
             if (target == null) return heightPositions.OrderByDescending(p => p.Dist(game.Enemy.Center) - game.Me.Center.Dist(p) / 2).First();
             return target;
         }
@@ -57,11 +62,10 @@ namespace aicup2019.Strategy.Services
         private static MyPosition Attack(MyGame game)
         {
             LogService.WriteLine("ATTACK");
-           //var heights = game.GetHeights();
-
-            var target = new MyPosition(game.Enemy.Center.X + game.XDiff * -5, game.Me.Center.Y);
-            if(target.X > game.Width || target.Y < 0) return new MyPosition(game.Enemy.Center.X + game.XDiff * 5, game.Me.Center.Y+50);
-            //LogService.DrawLine(game.Me.Center, new MyPosition(game.Me.LeftCorner.X + game.XDiff, heights[(int)(game.Me.LeftCorner.X + game.XDiff*2)]), 1, 1, 1);
+            var diff = 10;
+            if (game.Game.CurrentTick > 1000 && game.MePlayer.Score == 0) diff = 0;
+            var target = new MyPosition(game.Enemy.Center.X + game.XDiff * -diff, game.Me.Center.Y);
+            if(target.X > game.Width || target.Y < 0) return new MyPosition(game.Enemy.Center.X + game.XDiff * diff, game.Me.Center.Y+50);
             return target;
         }
     }

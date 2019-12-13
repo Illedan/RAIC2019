@@ -7,7 +7,7 @@ namespace aicup2019.Strategy.Services
         {
             if (!game.Me.HasWeapon) return game.Enemy.Center;
             var dist = game.Me.Center.Dist(game.Enemy.Center);
-            if (dist < 3) return game.Enemy.Center;
+            if (dist < 7) return game.Enemy.Center;
             return game.Enemy.GetEndPos(game);
         }
 
