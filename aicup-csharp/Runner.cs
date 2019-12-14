@@ -60,6 +60,7 @@ namespace AiCup2019
                     new Runner(host, port, token).Run();
                 }catch(Exception e)
                 {
+                    Console.Error.WriteLine(e.Message);
                     break; //Thread.Sleep(1000);
                 }
             }

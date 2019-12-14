@@ -13,7 +13,8 @@ public class MyStrategy
 
     public UnitAction GetAction(Unit unit, Game game, AiCup2019.Debug debug)
     {
-        Const.Properties = game.Properties;
+        Const.Reset(game.Properties);
+
         Debug = debug;
         var myGame = new MyGame(game, unit);
         var me = myGame.Me;
