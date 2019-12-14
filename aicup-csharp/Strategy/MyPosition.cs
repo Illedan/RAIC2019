@@ -45,5 +45,13 @@ namespace aicup2019.Strategy
             var dy = Math.Sin(angle);
             return new MyPosition(dx * speed + X, dy * speed + Y);
         }
+
+        public MyPosition Clone => new MyPosition(X, Y);
+
+        public void UpdateFrom(MyPosition p)
+        {
+            X = p.X;
+            Y = p.Y;
+        }
     }
 }

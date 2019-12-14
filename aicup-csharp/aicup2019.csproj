@@ -8,6 +8,7 @@
     <ItemGroup>
       <Folder Include="Strategy\" />
       <Folder Include="Strategy\Services\" />
+      <Folder Include="Strategy\Sim\" />
     </ItemGroup>
     <ItemGroup>
       <None Remove="CopyCode\bin\Debug\netcoreapp3.0\CopyCode" />
