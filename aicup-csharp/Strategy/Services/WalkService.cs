@@ -53,7 +53,9 @@ namespace aicup2019.Strategy.Services
 
         private static MyPosition Attack(MyGame game)
         {
-            return game.Enemy.Center.MoveTowards(game.Me.Center, 5);
+            var diff = 5;
+            if (game.Game.CurrentTick > 1000 && game.ScoreDiff <= 0) diff = 0;
+            return game.Enemy.Center.MoveTowards(game.Me.Center, diff);
            //LogService.WriteLine("ATTACK");
            //var diff = 10;
            //if (game.Game.CurrentTick > 1000 && game.ScoreDiff < 0) diff = 0;
