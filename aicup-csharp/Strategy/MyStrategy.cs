@@ -20,42 +20,29 @@ public class MyStrategy
         Debug = debug;
         var myGame = new MyGame(game, unit);
         var me = myGame.Me;
+        var sim = new SimGame(myGame);
+        DistService.CalcDists(sim);
+        myGame.Init();
+
         var aim = AimService.GetAimTarget(myGame);
         var shoot = ShootService.ShouldShoot(myGame, aim);
         var walkTarget = WalkService.FindWalkTarget(myGame);
-        var jump = JumpService.GetDir(myGame, walkTarget);
+        var jump = JumpService.GetDir(myGame, walkTarget.Clone);
 
-        var stopwatch = Stopwatch.StartNew();
-        var sim = new SimGame(myGame);
+
         var mySimUnit = sim.Units.First(u => u.unit.Id == me.Unit.Id);
         var selectedAction = MyAction.DoNothing;
-        var bestScore = -10000.0;
-        Const.Depth = sim.Bullets.Any(b => b.bullet.UnitId != mySimUnit.unit.Id) || me.Center.Dist(walkTarget) > 3 ? 30 : 6;
+        Const.Depth = 10; //sim.Bullets.Any(b => b.bullet.UnitId != mySimUnit.unit.Id) || me.Center.Dist(walkTarget) > 3 ? 10 : 3;
+        Const.DepthPerMove = 4;
+        var sol =  MonteCarlo.FindBest(sim, mySimUnit, walkTarget.Clone);
+        selectedAction = sol[0];
+        SimService.Simulate(sim, sol, mySimUnit, true);
+        sim.Reset();
+        Console.Error.WriteLine("Time: " + Const.GetTime + " Evals: " + Const.Evals + " Sims: " + Const.Sims);
 
-        foreach (var act in MyAction.Actions)
-        {
-            var score = SimService.ScoreDir(sim, act, walkTarget, mySimUnit, true);
-            sim.Reset();
-            if (score > bestScore)
-            {
-                selectedAction = act;
-                bestScore = score;
-            }
-        }
+        DistService.DrawPath(me.Center, walkTarget.Clone);
 
-        foreach (var act in MyAction.Actions)
-        {
-            var score = SimService.ScoreDir(sim, act, walkTarget, mySimUnit, false);
-            sim.Reset();
-            if(score > bestScore)
-            {
-                selectedAction = act;
-                bestScore = score;
-            }
-        }
-        //Console.Error.WriteLine("Time: " + stopwatch.ElapsedMilliseconds + " BestScore: " + bestScore);
-
-       // debug.Draw(new Line(aim.CreateFloatVec, me.Center.CreateFloatVec, 0.05f, new ColorFloat(1, 0, 0, 1)));
+        // debug.Draw(new Line(aim.CreateFloatVec, me.Center.CreateFloatVec, 0.05f, new ColorFloat(1, 0, 0, 1)));
         //debug.Draw(new Line(walkTarget.CreateFloatVec, me.Center.CreateFloatVec, 0.1f, new ColorFloat(0, 0.5f, 0, 1)));
         //  Debug.Draw(new Log("Spread: " + (unit.Weapon.HasValue?unit.Weapon.Value.Spread:0) + " MAG: " + (unit.Weapon.HasValue ? unit.Weapon.Value.Magazine : 0) + " Reload: " + reload));
         UnitAction action = new UnitAction();

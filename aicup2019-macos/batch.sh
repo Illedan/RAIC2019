@@ -5,7 +5,7 @@ rm ./results/*.json
 for i in {1..1000}
 do
     # echo "game $i"
-	./aicup2019 --batch-mode --config config.json --save-results results/$i.json
+	./aicup2019 --batch-mode --config config2.json --save-results results/$i.json
 	./analyze.py
 done
 

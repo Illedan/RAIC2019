@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System;
 using static AiCup2019.Model.CustomData;
 using static AiCup2019.Model.Item;
+using aicup2019.Strategy.Services;
 
 namespace aicup2019.Strategy
 {
@@ -28,11 +29,15 @@ namespace aicup2019.Strategy
             MePlayer = game.Players.First(p => p.Id == me.PlayerId);
             EnemyPlayer = game.Players.First(p => p.Id != me.PlayerId);
             Me = Units.First(u => u.Unit.Id == me.Id);
-            Enemy = Units.OrderBy(u => u.Center.Dist(Me.Center)).First(u => u.Unit.PlayerId != me.PlayerId);
+        }
+
+        public void Init()
+        {
+            Enemy = Units.OrderBy(u => DistService.GetDist(u.Center, Me.Center)).First(u => u.Unit.PlayerId != Me.Unit.PlayerId);
         }
 
         public int XDiff => Me.Center.X < Enemy.Center.X ? 1 : -1;
-        public double TargetDist => Me.Center.Dist(Enemy.Center);
+        public double TargetDist => DistService.GetDist(Me.Center, Enemy.Center);
         public int ScoreDiff => MePlayer.Score - EnemyPlayer.Score;
         public bool HasHealing => HealthPacks.Any();
 
@@ -55,15 +60,29 @@ namespace aicup2019.Strategy
             return 0;
         }
 
+        public List<MyPosition> GetHideouts()
+        {
+            var heights = GetHeights();
+            var hideouts = new List<MyPosition>();
+            for(var i = 2; i < heights.Length-2; i++)
+            {
+                var h = heights[i];
+                if (heights[i - 1] + 1 < h || heights[i + 1] < h) hideouts.Add(new MyPosition(i, heights[i]+1));
+            }
+            return hideouts;
+        }
+
         public int[] GetHeights()
         {
             var heights = new int[Width];
             for(var x = 0; x < Width; x++)
             {
-                for(var y = 1; y < Height; y++)
+                var foundIt = false;
+                for(var y = Height-1; y >= 0; y--)
                 {
                     var tile = Game.Level.Tiles[x][y];
-                    if(tile != Tile.Wall && Game.Level.Tiles[x][y-1] == Tile.Wall)
+                    if (tile == Tile.Empty) foundIt = true;
+                    else if (tile != Tile.Empty && foundIt)
                     {
                         heights[x] = y;
                         break;

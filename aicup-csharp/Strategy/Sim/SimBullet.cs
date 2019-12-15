@@ -36,7 +36,7 @@ namespace aicup2019.Strategy.Sim
                 if (IsCollidingWith(unit))
                 {
                     if (bullet.ExplosionParameters != null) Explode(game);
-                    else unit.Health -= bullet.Damage;
+                    unit.Health -= bullet.Damage;
                     IsDead = true;
                     return;
                 }
@@ -64,8 +64,8 @@ namespace aicup2019.Strategy.Sim
         {
             foreach (var unit in game.Units)
             {
-                if (Math.Abs(Position.X - unit.Position.X) > bullet.ExplosionParameters.Value.Radius + unit.HalfWidth
-                    || Math.Abs(Position.Y - unit.Position.Y) > bullet.ExplosionParameters.Value.Radius + unit.HalffHeight) continue;
+                if (Math.Abs(Position.X - unit.Position.X) > bullet.ExplosionParameters.Value.Radius + HalfSize + unit.HalfWidth
+                    || Math.Abs(Position.Y - unit.Position.Y) > bullet.ExplosionParameters.Value.Radius + HalfSize + unit.HalffHeight) continue;
                 unit.Health -= bullet.ExplosionParameters.Value.Damage;
             }
 

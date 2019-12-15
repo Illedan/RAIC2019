@@ -1,40 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using aicup2019.Strategy.Sim;
 namespace aicup2019.Strategy.Services
 {
     public static class SimService
     {
-        public static double ScoreDir(SimGame game, MyAction action, MyPosition targetPos, SimUnit mySimUnit, bool waitFirst)
+        private static MyPosition Target;
+        public static double ScoreDir(SimGame game, MyAction[] action, MyPosition targetPos, SimUnit mySimUnit)
         {
-            var actList = new List<MyAction> { action };
-            var hp = mySimUnit.Health;
-            if (waitFirst)
-            {
-                Simulate(game, new List<MyAction> { MyAction.DoNothing }, mySimUnit);
-            }
-            for (var i = waitFirst?1:0; i < Const.Depth; i++)
-            {
-                if (i % 5 == 0 && !waitFirst)
-                {
-                    mySimUnit.Draw(hp != mySimUnit.Health);
-                    hp = mySimUnit.Health;
-                }
-                SimService.Simulate(game, actList, mySimUnit);
-            }
-
-            return mySimUnit.Health * 100000 - mySimUnit.Position.Dist(targetPos);
+            Target = targetPos;
+            Const.Evals++; 
+            var score = Simulate(game, action, mySimUnit);
+            return mySimUnit.Health * 100000 +score;
         }
 
-        public static void Simulate(SimGame game, List<MyAction> moves, SimUnit target)
+        public static double Simulate(SimGame game, MyAction[] moves, SimUnit target, bool Draw = false)
         {
-            Const.Sims++;
-            for(var i = 0; i < moves.Count; i++)
+            var steps = Const.Steps * Const.DepthPerMove;
+            var hp = target.Health;
+            var d = DistService.GetDist(target.Position, Target);
+            for (var i = 0; i < moves.Length; i++)
             {
-                for(var s = 0; s < Const.Steps; s++)
+                var move = moves[i];
+                Const.Sims += Const.DepthPerMove;
+                for (var s = 0; s < steps; s++)
                 {
                     foreach(var u in game.Units)
                     {
-                        u.ApplyAction(u == target ? moves[i] : MyAction.DoNothing, game, Const.Time);
+                        u.ApplyAction(u == target ? move : MyAction.DoNothing, game, Const.Time);
                     }
 
                     foreach(var b in game.Bullets)
@@ -42,7 +35,14 @@ namespace aicup2019.Strategy.Services
                         b.Move(game, Const.Time);
                     }
                 }
+                d = Math.Min(d, DistService.GetDist(target.Position, Target));
+
+                if (Draw)
+                {
+                    target.Draw(hp != target.Health);
+                }
             }
+            return -d;
         }
     }
 }

@@ -5,7 +5,7 @@ namespace aicup2019.Strategy.Sim
 {
     public class SimGame
     {
-        private readonly MyGame game;
+        public readonly MyGame game;
         public List<SimUnit> Units = new List<SimUnit>();
         public List<SimBullet> Bullets = new List<SimBullet>();
 
