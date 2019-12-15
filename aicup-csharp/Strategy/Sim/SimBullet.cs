@@ -62,11 +62,10 @@ namespace aicup2019.Strategy.Sim
 
         public void Explode(SimGame game)
         {
-
             foreach (var unit in game.Units)
             {
-                if (Math.Abs(Position.X - unit.Position.X) > HalfSize + unit.HalfWidth
-                    || Math.Abs(Position.Y - unit.Position.Y) > HalfSize + unit.HalffHeight) continue;
+                if (Math.Abs(Position.X - unit.Position.X) > bullet.ExplosionParameters.Value.Radius + unit.HalfWidth
+                    || Math.Abs(Position.Y - unit.Position.Y) > bullet.ExplosionParameters.Value.Radius + unit.HalffHeight) continue;
                 unit.Health -= bullet.ExplosionParameters.Value.Damage;
             }
 
