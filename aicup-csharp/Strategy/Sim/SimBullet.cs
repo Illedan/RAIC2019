@@ -54,8 +54,8 @@ namespace aicup2019.Strategy.Sim
         public bool IsCollidingWith(SimUnit unit)
         {
             if (unit.unit.Id == bullet.UnitId || unit.Health <= 0) return false;
-            if (Math.Abs(Position.X - unit.Position.X) > HalfSize + unit.HalfWidth
-                || Math.Abs(Position.Y - unit.Position.Y) > HalfSize + unit.HalffHeight) return false;
+            if (Math.Abs(Position.X - unit.Position.X) > HalfSize*2 + unit.HalfWidth
+                || Math.Abs(Position.Y - unit.Position.Y) > HalfSize*2 + unit.HalffHeight) return false;
 
             return true;
         }

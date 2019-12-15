@@ -1,5 +1,6 @@
 ﻿using AiCup2019.Model;
 using aicup2019.Strategy.Services;
+using System.Threading.Tasks;
 namespace aicup2019.Strategy.Sim
 {
     public class SimUnit
@@ -10,8 +11,9 @@ namespace aicup2019.Strategy.Sim
         public readonly Unit unit;
         public MyPosition Position, _position;
         public int Health, _health;
-        public double HalfWidth, HalffHeight, JumpTime, _jumpTime;
-        public bool IsDead;
+        public double HalfWidth, HalffHeight, JumpTime, _jumpTime, Speed;
+        public bool IsDead, CanJump, CanCancel;
+
 
         public SimUnit(Unit unit)
         {
@@ -22,6 +24,9 @@ namespace aicup2019.Strategy.Sim
             Position = new MyPosition(unit.Position.X, unit.Position.Y + HalffHeight);
             _position = Position.Clone;
             JumpTime = _jumpTime = unit.JumpState.MaxTime > 0 ? unit.JumpState.MaxTime : (unit.JumpState.CanJump ? MaxJumpTime : 0);
+            CanJump = unit.JumpState.CanJump;
+            Speed = unit.JumpState.Speed;
+            CanCancel = unit.JumpState.CanCancel;
         }
 
         public void Reset()
@@ -29,7 +34,9 @@ namespace aicup2019.Strategy.Sim
             Position.UpdateFrom(_position);
             JumpTime = _jumpTime;
             Health = _health;
-
+            CanJump = unit.JumpState.CanJump;
+            Speed = unit.JumpState.Speed;
+            CanCancel = unit.JumpState.CanCancel;
         }
 
         public void Draw(bool dmged)
@@ -40,10 +47,19 @@ namespace aicup2019.Strategy.Sim
         public void ApplyAction(MyAction action, SimGame game, double dt)
         {
             var dy = -JumpSpeed;
-            if(JumpTime > 0 && (action.JumpUp || !unit.JumpState.CanCancel))
+            if (game.GetTileD(Position.X + HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad
+                || game.GetTileD(Position.X - HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad)
+            {
+                JumpTime = Const.Properties.JumpPadJumpTime;
+                Speed = Const.Properties.JumpPadJumpSpeed;
+                CanCancel = false;
+            }
+            if (JumpTime > 0 && (action.JumpUp || !CanCancel))
             {
                 JumpTime -= dt;
-                dy = JumpSpeed;
+                var speed = JumpSpeed;
+                if (Speed > JumpSpeed) speed = Speed;
+                dy = speed;
             }
             else
             {
@@ -91,6 +107,8 @@ namespace aicup2019.Strategy.Sim
                 {
                     y = Position.Y;
                     JumpTime = 0;
+                    Speed = JumpSpeed;
+                    CanCancel = true;
                 }
             }
 

@@ -16,13 +16,13 @@ namespace aicup2019.Strategy.Services
             {
                 if (i % 5 == 0 && !waitFirst)
                 {
-                   //mySimUnit.Draw(hp != mySimUnit.Health);
+                    mySimUnit.Draw(hp != mySimUnit.Health);
                     hp = mySimUnit.Health;
                 }
                 SimService.Simulate(game, actList, mySimUnit);
             }
 
-            return mySimUnit.Health * 1000 - mySimUnit.Position.Dist(targetPos);
+            return mySimUnit.Health * 100000 - mySimUnit.Position.Dist(targetPos);
         }
 
         public static void Simulate(SimGame game, List<MyAction> moves, SimUnit target)

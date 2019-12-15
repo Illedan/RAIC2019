@@ -30,7 +30,7 @@ public class MyStrategy
         var mySimUnit = sim.Units.First(u => u.unit.Id == me.Unit.Id);
         var selectedAction = MyAction.DoNothing;
         var bestScore = -10000.0;
-        Const.Depth = sim.Bullets.Any(b => b.bullet.UnitId != mySimUnit.unit.Id) ? 30 : 6;
+        Const.Depth = sim.Bullets.Any(b => b.bullet.UnitId != mySimUnit.unit.Id) || me.Center.Dist(walkTarget) > 3 ? 30 : 6;
 
         foreach (var act in MyAction.Actions)
         {
@@ -53,7 +53,7 @@ public class MyStrategy
                 bestScore = score;
             }
         }
-        Console.Error.WriteLine("Time: " + stopwatch.ElapsedMilliseconds + " BestScore: " + bestScore);
+        //Console.Error.WriteLine("Time: " + stopwatch.ElapsedMilliseconds + " BestScore: " + bestScore);
 
        // debug.Draw(new Line(aim.CreateFloatVec, me.Center.CreateFloatVec, 0.05f, new ColorFloat(1, 0, 0, 1)));
         //debug.Draw(new Line(walkTarget.CreateFloatVec, me.Center.CreateFloatVec, 0.1f, new ColorFloat(0, 0.5f, 0, 1)));

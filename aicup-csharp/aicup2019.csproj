@@ -29,9 +29,21 @@
       <None Remove="CopyCode\obj\project.assets.json" />
       <None Remove="CopyCode\obj\CopyCode.csproj.nuget.cache" />
       <None Remove="CopyCode\obj\CopyCode.csproj.nuget.g.targets" />
+      <None Remove="CopyCode\bin\Release\netcoreapp3.0\CopyCode" />
+      <None Remove="CopyCode\obj\Release\netcoreapp3.0\CopyCode.AssemblyInfoInputs.cache" />
+      <None Remove="CopyCode\obj\Release\netcoreapp3.0\CopyCode.dll" />
+      <None Remove="CopyCode\obj\Release\netcoreapp3.0\CopyCode.csproj.FileListAbsolute.txt" />
+      <None Remove="CopyCode\obj\Release\netcoreapp3.0\CopyCode" />
+      <None Remove="CopyCode\obj\Release\netcoreapp3.0\CopyCode.pdb" />
+      <None Remove="CopyCode\obj\Release\netcoreapp3.0\CopyCode.assets.cache" />
+      <None Remove="CopyCode\bin\Release\netcoreapp3.0\CopyCode.runtimeconfig.dev.json" />
+      <None Remove="CopyCode\bin\Release\netcoreapp3.0\CopyCode.runtimeconfig.json" />
+      <None Remove="CopyCode\bin\Release\netcoreapp3.0\CopyCode.dll" />
+      <None Remove="CopyCode\bin\Release\netcoreapp3.0\CopyCode.pdb" />
     </ItemGroup>
     <ItemGroup>
       <Compile Remove="CopyCode\Program.cs" />
       <Compile Remove="CopyCode\obj\Debug\netcoreapp3.0\CopyCode.AssemblyInfo.cs" />
+      <Compile Remove="CopyCode\obj\Release\netcoreapp3.0\CopyCode.AssemblyInfo.cs" />
     </ItemGroup>
 </Project>
