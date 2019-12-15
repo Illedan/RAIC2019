@@ -6,42 +6,6 @@ namespace aicup2019.Strategy.Services
 {
     public static class ShootService
     {
-        public static bool IsDangerous(MyGame game, out MyPosition safe)
-        {
-            var me = game.Me.Bottom;
-            var maxMS = Const.Properties.UnitMaxHorizontalSpeed / 60 * 20;
-            var maxHeigth = game.Me.Unit.JumpState.CanJump ? (game.Me.Bottom.Y + Const.Properties.UnitJumpSpeed / 60 * 20) : game.Me.Bottom.Y;
-            var posses = new List<MyPosition> { new MyPosition(me.X - maxMS, me.Y), new MyPosition(me.X + maxMS, me.Y), new MyPosition(me.X, maxHeigth), new MyPosition(me.X - maxMS, maxHeigth), new MyPosition(me.X + maxMS, maxHeigth) };
-            safe = null;
-            if (!IsDangerous(game, game.Me.Bottom)) return false;
-
-            foreach(var p in posses)
-            {
-                var diff = game.Me.Bottom.GetDx(p);
-                if (game.GetTile(me.X + diff, me.Y) == Tile.Wall) continue;
-                safe = p;
-                if (!IsDangerous(game, p)) return true;
-            }
-
-            return false;
-        }
-
-        private static bool IsDangerous(MyGame game, MyPosition pos)
-        {
-            var bullets = game.Bullets.Where(b => b.Bullet.UnitId != game.Me.Unit.Id).ToList();
-            var rect = new Rect(pos.X - game.Me.Unit.Size.X * 0.5, pos.Y, pos.X + game.Me.Unit.Size.X * 0.5, pos.Y + game.Me.Unit.Size.Y);
-            foreach(var b in bullets)
-            {
-                var time = GetShootTime(new MyPosition(b.Bullet.Position).Dist(pos), new MyPosition(b.Bullet.Velocity).Dist());
-                if (time > 0.3) continue;
-                var hitSpot = GetHitPos(new MyPosition(b.Bullet.Position), pos, game, new MyPosition(b.Bullet.Velocity).Dist(), false);
-                if (hitSpot.Dist(pos) < 1) return true;
-                if (b.Bullet.ExplosionParameters.HasValue && hitSpot.Dist(pos) < b.Bullet.ExplosionParameters.Value.Radius) return false;
-            }
-
-            return false;
-        }
-
         public static double GetShootTime(double dist, double speed)
         {
             return dist / speed;

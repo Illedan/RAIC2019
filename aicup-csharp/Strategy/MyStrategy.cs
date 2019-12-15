@@ -38,7 +38,8 @@ public class MyStrategy
         selectedAction = sol[0];
         SimService.Simulate(sim, sol, mySimUnit, true);
         sim.Reset();
-        Console.Error.WriteLine("Time: " + Const.GetTime + " Evals: " + Const.Evals + " Sims: " + Const.Sims);
+        if(game.CurrentTick % 600 == 0)
+            Console.Error.WriteLine("Time: " + Const.GetTime + " Evals: " + Const.Evals + " Sims: " + Const.Sims);
 
         DistService.DrawPath(me.Center, walkTarget.Clone);
 

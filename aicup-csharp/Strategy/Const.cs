@@ -8,7 +8,7 @@ namespace aicup2019.Strategy
     {
         public static Properties Properties;
         public static int Evals, Sims;
-        public static int Steps = 10, Depth = 20, DepthPerMove = 1;
+        public static int Steps = 5, Depth = 20, DepthPerMove = 1;
         public static double Time;
         public static Stopwatch Stopwatch;
 
@@ -23,7 +23,7 @@ namespace aicup2019.Strategy
         }
 
         private static bool m_isDone;
-        public static long m_timeout = 10;
+        public static long m_timeout = 5;
         private static int m_count;
 
         public static bool IsDone()

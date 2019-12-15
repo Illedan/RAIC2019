@@ -14,9 +14,6 @@ namespace aicup2019.Strategy.Services
 
         public static void DrawPath(MyPosition p1, MyPosition p2)
         {
-            var startDist = GetDist(p2, p1);
-            var startDist2 = GetDist(p1, p2);
-            Console.Error.WriteLine("StartDist: " + startDist + " - " + startDist2);
             var k = 0;
             while ((int)p1.X != (int)p2.X || (int)p1.Y != (int)p2.Y)
             {

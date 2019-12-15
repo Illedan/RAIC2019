@@ -64,9 +64,9 @@ namespace aicup2019.Strategy.Sim
             else
             {
                 JumpTime = 0;
+                CanCancel = true;
             }
 
-            var x = Position.X + action.Dx * MyAction.GetSpeed * dt;
             var y = Position.Y + dy * dt;
 
             var tile = game.GetTileD(Position.X-HalfWidth, y - HalffHeight);
@@ -112,11 +112,9 @@ namespace aicup2019.Strategy.Sim
                 }
             }
 
-
-            if (game.GetTileD(x + HalfWidth, y - HalffHeight) == Tile.Wall
-                || game.GetTileD(x - HalfWidth, y - HalffHeight) == Tile.Wall 
-                || game.GetTileD(x + HalfWidth, y + HalffHeight) == Tile.Wall 
-                || game.GetTileD(x - HalfWidth, y + HalffHeight) == Tile.Wall) x = Position.X;
+            var x = Position.X + action.Dx * MyAction.GetSpeed * dt;
+            if (game.GetTileD(x + HalfWidth * action.Dx, Position.Y) == Tile.Wall
+                || game.GetTileD(x + HalfWidth * action.Dx, Position.Y) == Tile.Wall) x = Position.X;
 
             Position.X = x;
             Position.Y = y;

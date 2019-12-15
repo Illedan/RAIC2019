@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using aicup2019.Strategy.Sim;
 using AiCup2019.Model;
 
@@ -19,16 +20,17 @@ namespace aicup2019.Strategy.Services
             foreach(var act in MyAction.Actions)
             {
                 Repeat(Temp, act);
-                Score(game, unit, targetPos);
+                Score(game, unit, targetPos, true);
             }
 
-            foreach (var act in MyAction.Actions)
+            foreach (var act in MyAction.Actions.Take(2))
             {
                 Repeat(Temp, act);
                 Temp[0] = MyAction.DoNothing;
                 Score(game, unit, targetPos);
             }
 
+            if (!game.Bullets.Any()) return Best;
             while (!Const.IsDone())
             {
                 if (rnd.NextDouble() < 0.3) Randomize(Temp);
@@ -39,9 +41,9 @@ namespace aicup2019.Strategy.Services
             return Best;
         }
 
-        public static void Score(SimGame game, SimUnit unit, MyPosition targetPos)
+        public static void Score(SimGame game, SimUnit unit, MyPosition targetPos, bool draw = false)
         {
-            var score = SimService.ScoreDir(game, Temp, targetPos, unit);
+            var score = SimService.ScoreDir(game, Temp, targetPos, unit, draw);
             game.Reset();
             if(score > bestScore)
             {
