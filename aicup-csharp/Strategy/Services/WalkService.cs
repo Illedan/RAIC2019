@@ -9,13 +9,14 @@ namespace aicup2019.Strategy.Services
         public static MyPosition GetRealTarget (MyGame game)
         {
             var me = game.Me;
+            //if (game.Game.CurrentTick > 1000) return Attack(game);
             if (!me.HasWeapon) return GetWeapon(game);
             var weaps = game.Weapons.Where(w => (w.Item as Item.Weapon).WeaponType == WeaponType.RocketLauncher).ToList();
             if (me.Weapon.Typ != AiCup2019.Model.WeaponType.RocketLauncher && weaps.Any(w => me.Center.Dist(new MyPosition(w.Position)) < 4)) return new MyPosition(weaps.First(w => me.Center.Dist(new MyPosition(w.Position)) < 4).Position);
             if (me.ShouldHeal && game.HasHealing) return GetHealing(game);
             //return new MyPosition(game.Enemy.Center.MoveTowards(me.Center, 3).X, game.Height-2);
             if (me.Weapon.FireTimer > 0.2 && game.Me.Center.Dist(game.Enemy.Center) < 3) return Hide(game);
-           LogService.WriteLine("Diff: " + game.ScoreDiff + " Tick: " + game.Game.CurrentTick + " " + game.Width + " " + game.Height);
+           //LogService.WriteLine("Diff: " + game.ScoreDiff + " Tick: " + game.Game.CurrentTick + " " + game.Width + " " + game.Height);
            if(game.TargetDist < 4 && Math.Abs(game.Me.Center.Y-game.Enemy.Center.Y) < 1) return Attack(game);
            if (game.ScoreDiff > 0) return Hide(game);
            // if (game.ScoreDiff == 0 && game.Game.CurrentTick < 300 && game.Enemy.HasWeapon) return Hide(game);
@@ -25,6 +26,17 @@ namespace aicup2019.Strategy.Services
         public static MyPosition FindWalkTarget(MyGame game)
         {
             var target = GetRealTarget(game);
+            LogService.DrawLineBetweenCenter(target, game.Me.Bottom, 1, 1, 1);
+            for (var y = (int)target.Y; y < game.Height; y++)
+            {
+                var p = new MyPosition(target.X, y);
+                if(DistService.GetDist(p, game.Me.Center) < game.Width * game.Height * 4)
+                {
+                    target = p;
+                    break;
+                }
+            }
+
             LogService.DrawLine(target, game.Me.Bottom, 1, 0, 0);
             return target;
         }
@@ -48,7 +60,7 @@ namespace aicup2019.Strategy.Services
             LogService.WriteLine("HIDE");
             var heights = game.GetHideouts();
 
-            return heights.OrderByDescending(p => -DistService.GetDist(p,game.Enemy.Center)*0.5 - DistService.GetDist(game.Me.Center,p)).First();
+            return heights.OrderByDescending(p => -DistService.GetDist(p,game.Enemy.Center) - DistService.GetDist(game.Me.Center,p)*0.5).First();
         }
 
         private static MyPosition Attack(MyGame game)

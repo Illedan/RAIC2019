@@ -30,7 +30,7 @@ namespace aicup2019.Strategy.Services
                 Score(game, unit, targetPos);
             }
 
-            if (!game.Bullets.Any()) return Best;
+           // if (!game.Bullets.Any()) return Best;
             while (!Const.IsDone())
             {
                 if (rnd.NextDouble() < 0.3) Randomize(Temp);

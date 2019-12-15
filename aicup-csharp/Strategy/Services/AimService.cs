@@ -5,6 +5,8 @@ namespace aicup2019.Strategy.Services
     {
         public static MyPosition GetAimTarget(MyGame game)
         {
+            // Om eg ikke kan sikt rett på. Sikt på nærmeste punkt eg kan skyt han fra?
+            // Med mindre eg er på vei mot han? For da kan eg 
             if (!game.Me.HasWeapon) return game.Enemy.Center;
             var dist = game.Me.Center.Dist(game.Enemy.Center);
             var requested = game.Enemy.Center;

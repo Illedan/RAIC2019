@@ -113,8 +113,8 @@ namespace aicup2019.Strategy.Sim
             }
 
             var x = Position.X + action.Dx * MyAction.GetSpeed * dt;
-            if (game.GetTileD(x + HalfWidth * action.Dx, Position.Y) == Tile.Wall
-                || game.GetTileD(x + HalfWidth * action.Dx, Position.Y) == Tile.Wall) x = Position.X;
+            if (game.GetTileD(x + HalfWidth * action.Dx, Position.Y + HalffHeight) == Tile.Wall
+                || game.GetTileD(x + HalfWidth * action.Dx, Position.Y - HalffHeight) == Tile.Wall) x = Position.X;
 
             Position.X = x;
             Position.Y = y;

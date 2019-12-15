@@ -11,6 +11,7 @@ namespace aicup2019.Strategy.Services
         private static bool m_isRun;
         public static int[,] Dists;
         private static SimGame Game;
+        // Find all reachable tiles.
 
         public static void DrawPath(MyPosition p1, MyPosition p2)
         {
@@ -27,7 +28,7 @@ namespace aicup2019.Strategy.Services
                     var yy = (int)p1.Y + dyes[i];
                     if (!Game.OnBoard(xx, yy) || Game.GetTile(xx, yy) == AiCup2019.Model.Tile.Wall) continue;
                     var newPos = new MyPosition(xx, yy);
-                    var dist = GetDist(p2, newPos);
+                    var dist = GetDist(p2, newPos) - p2.Dist(newPos)*0.1;
                     if(dist < bestDist)
                     {
                         best = newPos;
@@ -57,7 +58,7 @@ namespace aicup2019.Strategy.Services
                 for(var j = 0; j <max; j++)
                 {
                     if (i == j) Dists[i, j] = 0;
-                    else Dists[i, j] = max;
+                    else Dists[i, j] = max*4;
                 }
             }
             for (var i = 1; i < Game.game.Width-1; i++)
@@ -77,7 +78,6 @@ namespace aicup2019.Strategy.Services
             var posses = new List<Node> { new Node { X = x, Y = y, Dist = 0 } };
             while(posses.Count > 0)
             {
-                //Find shortest?
                 var next = posses[0];
                 for(var i = 0; i < posses.Count; i++)
                 {
@@ -99,7 +99,7 @@ namespace aicup2019.Strategy.Services
             {
                 var xx = x + dxes[i];
                 var yy = y + dyes[i];
-                if (!Game.OnBoard(xx, yy)) continue;
+                if (!Game.OnBoard(xx, yy) || xx == 0 || xx >= Game.game.Width-1 || yy == 0 || yy >= Game.game.Height-1) continue;
                 var pos = Game.GetPos(xx, yy);
                 var tile = Game.Board[Game.GetPos(xx, yy)];
                 if (tile == AiCup2019.Model.Tile.Wall) continue;

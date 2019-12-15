@@ -106,7 +106,7 @@ namespace aicup2019.Strategy
         }
 
 
-        public Vec2Float CalcBulletEnd(MyBullet bullet, out bool didHit)
+        public Vec2Float CalcBulletEnd(MyBullet bullet, double maxSpeed, out bool didHit)
         {
             var potentialUnits = Units.Where(u => u.Unit.Id != bullet.Bullet.UnitId).ToArray();
             var pos = new Vec2Double(bullet.Bullet.Position.X, bullet.Bullet.Position.Y);

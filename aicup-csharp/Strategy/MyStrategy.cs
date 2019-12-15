@@ -23,7 +23,7 @@ public class MyStrategy
         var sim = new SimGame(myGame);
         DistService.CalcDists(sim);
         myGame.Init();
-
+        foreach (var b in sim.Bullets) b.CalcCollisionTime(sim);
         var aim = AimService.GetAimTarget(myGame);
         var shoot = ShootService.ShouldShoot(myGame, aim);
         var walkTarget = WalkService.FindWalkTarget(myGame);
@@ -33,7 +33,7 @@ public class MyStrategy
         var mySimUnit = sim.Units.First(u => u.unit.Id == me.Unit.Id);
         var selectedAction = MyAction.DoNothing;
         Const.Depth = 10; //sim.Bullets.Any(b => b.bullet.UnitId != mySimUnit.unit.Id) || me.Center.Dist(walkTarget) > 3 ? 10 : 3;
-        Const.DepthPerMove = 4;
+        Const.DepthPerMove = 3;
         var sol =  MonteCarlo.FindBest(sim, mySimUnit, walkTarget.Clone);
         selectedAction = sol[0];
         SimService.Simulate(sim, sol, mySimUnit, true);
@@ -65,10 +65,10 @@ public class MyStrategy
            debug.Draw(new Line(point.CreateFloatVec, me.Center.CreateFloatVec, 0.05f, new ColorFloat(0.1f, 0.1f, 0.4f, 1)));
         }
 
-        foreach (var bullet in myGame.Bullets)
+        foreach (var bullet in sim.Bullets)
         {
-            var start = bullet.Bullet.Position;
-            var end = myGame.CalcBulletEnd(bullet, out bool didHit);
+            var start = bullet.bullet.Position;
+            var end = bullet.EndPosition;
             var sFloat = new Vec2Float((float)start.X, (float)start.Y);
             var eFloat = new Vec2Float((float)end.X, (float)end.Y);
             debug.Draw(new Line(sFloat, eFloat, 0.1f, new ColorFloat(0, 0, 0, 1)));

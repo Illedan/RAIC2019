@@ -18,7 +18,7 @@ namespace aicup2019.Strategy.Services
         {
             var steps = Const.Steps * Const.DepthPerMove;
             var hp = target.Health;
-            double d = DistService.GetDist(target.Position, Target) ;
+            double d = DistService.GetDist(target.Position, Target) - target.Position.Dist(Target) * 0.1;
             for (var i = 0; i < moves.Length; i++)
             {
                 var move = moves[i];
@@ -35,7 +35,7 @@ namespace aicup2019.Strategy.Services
                         b.Move(game, Const.Time);
                     }
                 }
-                d = Math.Min(d, DistService.GetDist(target.Position, Target) + (i+1)*0.1);
+                d = Math.Min(d, DistService.GetDist(target.Position, Target) - target.Position.Dist(Target) * 0.1 + (i+1)*0.1);
 
                 if (Draw)
                 {

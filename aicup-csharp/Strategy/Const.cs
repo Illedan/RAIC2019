@@ -33,7 +33,7 @@ namespace aicup2019.Strategy
                 return true;
             }
 
-            if (++m_count > 20)
+            if (++m_count > 5)
             {
                 var time = GetTime;
                 if (time > m_timeout)

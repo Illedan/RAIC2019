@@ -5,8 +5,8 @@ namespace aicup2019.Strategy.Sim
     public class SimBullet
     {
         public readonly Bullet bullet;
-        public double Dx, Dy, HalfSize, ExplosionSize;
-        public MyPosition Position, _position;
+        public double Dx, Dy, HalfSize, ExplosionSize, CollisionTime, _collisionTime;
+        public MyPosition Position, _position, EndPosition;
         public bool IsDead;
 
         public SimBullet(Bullet bullet)
@@ -24,11 +24,49 @@ namespace aicup2019.Strategy.Sim
         {
             IsDead = false;
             Position.UpdateFrom(_position);
+            CollisionTime = _collisionTime;
+        }
+
+        public void CalcCollisionTime(SimGame game)
+        {
+            var t = 0.0;
+            var dt = 1.0 / Const.Properties.TicksPerSecond / Const.Properties.UpdatesPerTick;
+            while (true)
+            {
+                t += dt;
+                Position.X += Dx * dt;
+                Position.Y += Dy * dt;
+                if (CollidesWithWall(game))
+                {
+                    CollisionTime = _collisionTime = t;
+                    EndPosition = new MyPosition(Position.X, Position.Y);
+                    break;
+                }
+            }
+
+            Position.UpdateFrom(_position);
+        }
+
+        public bool CollidesWithWall(SimGame game)
+        {
+            var x = Position.X;
+            var y = Position.Y;
+            return CollidesWithWall(game, Position.X - HalfSize, Position.Y - HalfSize)
+                || CollidesWithWall(game, Position.X + HalfSize, Position.Y - HalfSize)
+                || CollidesWithWall(game, Position.X + HalfSize, Position.Y + HalfSize)
+                || CollidesWithWall(game, Position.X - HalfSize, Position.Y + HalfSize);
+        }
+
+        public bool CollidesWithWall(SimGame game, double x, double y)
+        {
+            var tile = game.GetTileD(x, y);
+            return tile == Tile.Wall;
         }
 
         public void Move(SimGame game, double dt)
         {
             if (IsDead) return;
+            CollisionTime -= dt;
             Position.X += Dx * dt;
             Position.Y += Dy * dt;
             foreach(var unit in game.Units)
@@ -43,8 +81,7 @@ namespace aicup2019.Strategy.Sim
             }
 
             //TODO: Check mines
-            var tile = game.GetTileD(Position.X, Position.Y);
-            if (tile == Tile.Wall)
+            if (CollidesWithWall(game) || CollisionTime <= 0)
             {
                 IsDead = true;
                 if (bullet.ExplosionParameters != null) Explode(game);
