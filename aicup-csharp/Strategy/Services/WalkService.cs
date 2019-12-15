@@ -13,13 +13,13 @@ namespace aicup2019.Strategy.Services
             var weaps = game.Weapons.Where(w => (w.Item as Item.Weapon).WeaponType == WeaponType.RocketLauncher).ToList();
             if (me.Weapon.Typ != AiCup2019.Model.WeaponType.RocketLauncher && weaps.Any(w => me.Center.Dist(new MyPosition(w.Position)) < 4)) return new MyPosition(weaps.First(w => me.Center.Dist(new MyPosition(w.Position)) < 4).Position);
             if (me.ShouldHeal && game.HasHealing) return GetHealing(game);
-            return new MyPosition(game.Enemy.Center.MoveTowards(me.Center, 3).X, 50);
-           //if (me.Weapon.FireTimer > 0.2 && game.Me.Center.Dist(game.Enemy.Center) < 3) return Hide(game);
-           //LogService.WriteLine("Diff: " + game.ScoreDiff + " Tick: " + game.Game.CurrentTick + " " + game.Width + " " + game.Height);
-           //if(game.TargetDist < 4 && Math.Abs(game.Me.Center.Y-game.Enemy.Center.Y) < 1) return Attack(game);
-           //if (game.ScoreDiff > 0) return Hide(game);
-           /// if (game.ScoreDiff == 0 && game.Game.CurrentTick < 300 && game.Enemy.HasWeapon) return Hide(game);
-           //return Attack(game);
+            //return new MyPosition(game.Enemy.Center.MoveTowards(me.Center, 3).X, 50);
+           if (me.Weapon.FireTimer > 0.2 && game.Me.Center.Dist(game.Enemy.Center) < 3) return Hide(game);
+           LogService.WriteLine("Diff: " + game.ScoreDiff + " Tick: " + game.Game.CurrentTick + " " + game.Width + " " + game.Height);
+           if(game.TargetDist < 4 && Math.Abs(game.Me.Center.Y-game.Enemy.Center.Y) < 1) return Attack(game);
+           if (game.ScoreDiff > 0) return Hide(game);
+           // if (game.ScoreDiff == 0 && game.Game.CurrentTick < 300 && game.Enemy.HasWeapon) return Hide(game);
+           return Attack(game);
         }
 
         public static MyPosition FindWalkTarget(MyGame game)
@@ -62,12 +62,13 @@ namespace aicup2019.Strategy.Services
 
         private static MyPosition Attack(MyGame game)
         {
-            LogService.WriteLine("ATTACK");
-            var diff = 10;
-            if (game.Game.CurrentTick > 1000 && game.MePlayer.Score == 0) diff = 0;
-            var target = new MyPosition(game.Enemy.Center.X + game.XDiff * -diff, game.Me.Center.Y);
-            if(target.X > game.Width || target.Y < 0) return new MyPosition(game.Enemy.Center.X + game.XDiff * diff, game.Me.Center.Y+50);
-            return target;
+            return new MyPosition(game.Enemy.Center.MoveTowards(game.Me.Center, 5).X, 50);
+           //LogService.WriteLine("ATTACK");
+           //var diff = 10;
+           //if (game.Game.CurrentTick > 1000 && game.ScoreDiff < 0) diff = 0;
+           //var target = new MyPosition(game.Enemy.Center.X + game.XDiff * -diff, game.Me.Center.Y);
+           //if(target.X > game.Width || target.Y < 0) return new MyPosition(game.Enemy.Center.X + game.XDiff * diff, game.Me.Center.Y+50);
+           //return target;
         }
     }
 }

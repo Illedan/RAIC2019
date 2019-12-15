@@ -30,7 +30,7 @@ public class MyStrategy
         var mySimUnit = sim.Units.First(u => u.unit.Id == me.Unit.Id);
         var selectedAction = MyAction.DoNothing;
         var bestScore = -10000.0;
-        Const.Depth = sim.Bullets.Any(b => b.bullet.UnitId != mySimUnit.unit.Id) ? 31 : 6;
+        Const.Depth = sim.Bullets.Any(b => b.bullet.UnitId != mySimUnit.unit.Id) ? 30 : 6;
 
         foreach (var act in MyAction.Actions)
         {
