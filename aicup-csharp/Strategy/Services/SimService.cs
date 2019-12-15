@@ -14,9 +14,9 @@ namespace aicup2019.Strategy.Services
             }
             for (var i = waitFirst?1:0; i < Const.Depth; i++)
             {
-                if (i % 5 == 0)
+                if (i % 5 == 0 && !waitFirst)
                 {
-                    mySimUnit.Draw(hp != mySimUnit.Health);
+                   //mySimUnit.Draw(hp != mySimUnit.Health);
                     hp = mySimUnit.Health;
                 }
                 SimService.Simulate(game, actList, mySimUnit);

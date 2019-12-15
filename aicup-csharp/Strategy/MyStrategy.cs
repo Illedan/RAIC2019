@@ -31,9 +31,21 @@ public class MyStrategy
         var selectedAction = MyAction.DoNothing;
         var bestScore = -10000.0;
         Const.Depth = sim.Bullets.Any(b => b.bullet.UnitId != mySimUnit.unit.Id) ? 31 : 6;
+
         foreach (var act in MyAction.Actions)
         {
-            var score = SimService.ScoreDir(sim, act, walkTarget, mySimUnit);
+            var score = SimService.ScoreDir(sim, act, walkTarget, mySimUnit, true);
+            sim.Reset();
+            if (score > bestScore)
+            {
+                selectedAction = act;
+                bestScore = score;
+            }
+        }
+
+        foreach (var act in MyAction.Actions)
+        {
+            var score = SimService.ScoreDir(sim, act, walkTarget, mySimUnit, false);
             sim.Reset();
             if(score > bestScore)
             {
