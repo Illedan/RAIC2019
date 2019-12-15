@@ -4,7 +4,7 @@ namespace aicup2019.Strategy.Sim
 {
     public class SimBullet
     {
-        private readonly Bullet bullet;
+        public readonly Bullet bullet;
         public double Dx, Dy, HalfSize, ExplosionSize;
         public MyPosition Position, _position;
         public bool IsDead;
@@ -18,6 +18,12 @@ namespace aicup2019.Strategy.Sim
             Dy = bullet.Velocity.Y;
             HalfSize = bullet.Size / 2;
             ExplosionSize = bullet.ExplosionParameters.HasValue ? bullet.ExplosionParameters.Value.Radius : 0.0;
+        }
+
+        public void Reset()
+        {
+            IsDead = false;
+            Position.UpdateFrom(_position);
         }
 
         public void Move(SimGame game, double dt)

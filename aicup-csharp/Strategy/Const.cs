@@ -7,8 +7,9 @@ namespace aicup2019.Strategy
     {
         public static Properties Properties;
         public static int Evals, Sims;
-        public static int Steps = 5;
+        public static int Steps = 5, Depth = 31;
         public static double Time;
+        
 
         public static void Reset(Properties properties)
         {

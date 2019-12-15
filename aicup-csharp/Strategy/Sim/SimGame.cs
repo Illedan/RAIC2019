@@ -37,5 +37,11 @@ namespace aicup2019.Strategy.Sim
         public Tile GetTile(int x, int y) => OnBoard(x, y) ? Board[GetPos(x, y)] : Tile.Wall;
         public bool OnBoard(int x, int y) => game.OnBoard(x, y);
         public int GetPos(int x, int y) => game.Width * y + x;
+
+        public void Reset()
+        {
+            foreach (var b in Bullets) b.Reset();
+            foreach (var u in Units) u.Reset();
+        }
     }
 }

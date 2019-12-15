@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using AiCup2019.Model;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace AiCup2019
 {
@@ -48,7 +49,7 @@ namespace AiCup2019
                 writer.Flush();
             }
         }
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             while (true)
             {
@@ -60,8 +61,9 @@ namespace AiCup2019
                     new Runner(host, port, token).Run();
                 }catch(Exception e)
                 {
-                    Console.Error.WriteLine(e.Message);
-                    break; //Thread.Sleep(1000);
+                   Console.Error.WriteLine(e.Message);
+                   //break; 
+                    await Task.Delay(100);
                 }
             }
         }
