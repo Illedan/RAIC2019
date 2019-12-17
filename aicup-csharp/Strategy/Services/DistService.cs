@@ -56,7 +56,6 @@ namespace aicup2019.Strategy.Services
             var t = Const.GetTime;
             m_isRun = true;
             var max = Game.game.Width * Game.game.Height;
-            Console.Error.WriteLine("MAX: " + max);
             Dists = new int[max, max];
             for (var i = 0; i< max; i++)
             {
@@ -110,9 +109,13 @@ namespace aicup2019.Strategy.Services
                 if (!Game.OnBoard(xx, yy) || xx == 0 || xx >= Game.game.Width-1 || yy == 0 || yy >= Game.game.Height-1) continue;
                 var pos = Game.GetPos(xx, yy);
                 var tile = Game.Board[pos];
-                if (tile == AiCup2019.Model.Tile.Wall) continue;
                 var stepCost = tile == AiCup2019.Model.Tile.Empty ? 3 : 1;
                 var nextDist = dist + stepCost;
+                if (tile == AiCup2019.Model.Tile.Wall)
+                {
+                    Dists[p, pos] = Math.Min(Dists[p, pos], nextDist);
+                    continue;
+                }
                 var prevDist = Dists[p, pos];
                 if (prevDist <= nextDist) continue;
                 Dists[p, pos] = nextDist;

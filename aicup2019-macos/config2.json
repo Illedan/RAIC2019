@@ -4,7 +4,7 @@
     "Custom": {
       "level": "Simple",
       "properties": {
-        "max_tick_count": 3600,
+        "max_tick_count": 1200,
         "team_size": 2,
         "ticks_per_second": 60.0,
         "updates_per_tick": 100,
@@ -99,6 +99,14 @@
         "token": null
       }
     },
-    "Quickstart"
+    {
+      "Tcp": {
+        "host": null,
+        "port": 31002,
+        "accept_timeout": null,
+        "timeout": null,
+        "token": null
+      }
+    }
   ]
 }

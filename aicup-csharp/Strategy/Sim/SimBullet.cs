@@ -5,7 +5,7 @@ namespace aicup2019.Strategy.Sim
     public class SimBullet
     {
         public readonly Bullet bullet;
-        public double Dx, Dy, HalfSize, ExplosionSize, CollisionTime, _collisionTime;
+        public double Dx, Dy, HalfSize, ExplosionSize, CollisionTime = 999999, _collisionTime = 999999;
         public MyPosition Position, _position, EndPosition;
         public bool IsDead;
 

@@ -14,9 +14,12 @@ namespace aicup2019.Strategy.Sim
         public double HalfWidth, HalffHeight, JumpTime, _jumpTime, Speed;
         public bool IsDead, CanJump, CanCancel;
 
+        public bool HasWeapon;
+
         public SimUnit(Unit unit)
         {
             this.unit = unit;
+            HasWeapon = unit.Weapon.HasValue;
             Health = _health = unit.Health;
             HalfWidth = unit.Size.X / 2;
             HalffHeight = unit.Size.Y / 2;
