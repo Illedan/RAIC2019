@@ -9,8 +9,10 @@ namespace aicup2019.Strategy.Services
         public static MyPosition GetRealTarget (MyGame game)
         {
             var me = game.Me;
+            var allied = game.Units.Where(u => u.Unit.PlayerId == me.Unit.PlayerId).OrderBy(u => u.Center.Dist(game.Enemy.Center)).ToList();
             //if (game.Game.CurrentTick > 1000) return Attack(game);
             if (!me.HasWeapon) return GetWeapon(game);
+            if (allied.Count == 2 && me == allied.Last() && allied[0].Health > 20) return allied[0].Center.MoveTowards(game.Me.Center, 100);
             var weaps = game.Weapons.Where(w => (w.Item as Item.Weapon).WeaponType == WeaponType.RocketLauncher).ToList();
             if (me.Weapon.Typ != AiCup2019.Model.WeaponType.RocketLauncher && weaps.Any(w => me.Center.Dist(new MyPosition(w.Position)) < 4)) return new MyPosition(weaps.First(w => me.Center.Dist(new MyPosition(w.Position)) < 4).Position);
             if (me.ShouldHeal && game.HasHealing) return GetHealing(game);
@@ -26,12 +28,16 @@ namespace aicup2019.Strategy.Services
         public static MyPosition FindWalkTarget(MyGame game)
         {
             var target = GetRealTarget(game);
-            LogService.DrawLineBetweenCenter(target, game.Me.Bottom, 1, 1, 1);
+            LogService.DrawLineBetweenCenter(target, game.Me.Center, 1, 1, 1);
             for (var y = (int)target.Y; y < game.Height; y++)
             {
                 var p = new MyPosition(target.X, y);
-                if(DistService.GetDist(p, game.Me.Center) < game.Width * game.Height * 4)
+                var d = DistService.GetDist(p, game.Me.Center);
+                if (d < game.Width * game.Height * 4)
                 {
+                    LogService.m_debug = true;
+                    LogService.WriteLine("DIST TARGET: " + d + " TARGET: " + p.X + " " + p.Y);
+                    LogService.m_debug = false;
                     target = p;
                     break;
                 }
@@ -44,6 +50,15 @@ namespace aicup2019.Strategy.Services
         private static MyPosition GetWeapon(MyGame game)
         {
             LogService.WriteLine("WEAPON");
+            foreach(var w in game.Weapons)
+            {
+                var p = new MyPosition(w.Position);
+                var dist = DistService.GetDist(p, game.Me.Center);
+                LogService.m_debug = true;
+                LogService.DrawLineBetweenCenter(p, game.Me.Center, 0,1,0);
+                LogService.WriteLine("DIST: " + dist);
+                LogService.m_debug = false;
+            }
             return new MyPosition(game.Weapons.OrderBy(p => DistService.GetDist(new MyPosition(p.Position), game.Me.Center)).First().Position);
         }
 
@@ -60,14 +75,15 @@ namespace aicup2019.Strategy.Services
             LogService.WriteLine("HIDE");
             var heights = game.GetHideouts();
 
-            return heights.OrderByDescending(p => -DistService.GetDist(p,game.Enemy.Center) - DistService.GetDist(game.Me.Center,p)*0.5).First();
+            return heights.OrderByDescending(p => DistService.GetDist(p,game.Enemy.Center) - DistService.GetDist(game.Me.Center,p)*0.5).First();
         }
 
         private static MyPosition Attack(MyGame game)
         {
             var diff = 5;
-            if (game.Game.CurrentTick > 1000 && game.ScoreDiff <= 0) diff = 0;
-            return game.Enemy.Center.MoveTowards(game.Me.Center, diff);
+            if (game.Game.CurrentTick > 1000 && game.ScoreDiff <= 0) diff = 3;
+            var target= game.Enemy.Center.MoveTowards(game.Me.Center, diff);
+            return new MyPosition(target.X, Math.Min(target.Y, game.Height - 2));
            //LogService.WriteLine("ATTACK");
            //var diff = 10;
            //if (game.Game.CurrentTick > 1000 && game.ScoreDiff < 0) diff = 0;

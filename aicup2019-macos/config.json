@@ -3,7 +3,9 @@
   "options_preset": {
     "Custom": {
       "level": "Simple",
-      "properties": null
+      "properties": {
+        "team_size": 2
+      }
     }
   },
   "players": [

@@ -41,8 +41,6 @@ public class MyStrategy
         if(game.CurrentTick % 600 == 0)
             Console.Error.WriteLine("Time: " + Const.GetTime + " Evals: " + Const.Evals + " Sims: " + Const.Sims);
 
-        DistService.DrawPath(me.Center, walkTarget.Clone);
-
         // debug.Draw(new Line(aim.CreateFloatVec, me.Center.CreateFloatVec, 0.05f, new ColorFloat(1, 0, 0, 1)));
         //debug.Draw(new Line(walkTarget.CreateFloatVec, me.Center.CreateFloatVec, 0.1f, new ColorFloat(0, 0.5f, 0, 1)));
         //  Debug.Draw(new Log("Spread: " + (unit.Weapon.HasValue?unit.Weapon.Value.Spread:0) + " MAG: " + (unit.Weapon.HasValue ? unit.Weapon.Value.Magazine : 0) + " Reload: " + reload));

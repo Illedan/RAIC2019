@@ -7,6 +7,7 @@ using System.Text;
 using AiCup2019.Model;
 using System.Threading;
 using System.Threading.Tasks;
+using aicup2019.Strategy.Services;
 
 namespace AiCup2019
 {
@@ -55,6 +56,7 @@ namespace AiCup2019
             {
                 try
                 {
+                    DistService.m_isRun = false;
                     string host = args.Length < 1 ? "127.0.0.1" : args[0];
                     int port = args.Length < 2 ? 31001 : int.Parse(args[1]);
                     string token = args.Length < 3 ? "0000000000000000" : args[2];

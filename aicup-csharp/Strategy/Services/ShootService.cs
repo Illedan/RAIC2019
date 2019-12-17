@@ -17,13 +17,13 @@ namespace aicup2019.Strategy.Services
             return GetShootTime(dist, bulletSpeed);
         }
 
-        public static bool CanShoot(MyPosition startPos, MyPosition endPos, MyGame game, double bulletSpeed)
+        public static bool CanShoot(MyPosition startPos, MyPosition endPos, MyGame game, MyUnit firering, double bulletSpeed)
         {
-            var hitPos = GetHitPos(startPos, endPos, game, bulletSpeed);
+            var hitPos = GetHitPos(startPos, endPos, game, bulletSpeed, firering);
             if(game.Me.Weapon.Typ == WeaponType.RocketLauncher)
             {
                 var spread = AimService.GetSpread(game, endPos);
-                var posses = spread.Select(s => GetHitPos(startPos, s, game, bulletSpeed)).ToArray();
+                var posses = spread.Select(s => GetHitPos(startPos, s, game, bulletSpeed, firering)).ToArray();
                 foreach(var p in posses)
                 {
                     LogService.DrawLine(p, game.Me.Center, 0, 0, 1);
@@ -36,7 +36,7 @@ namespace aicup2019.Strategy.Services
             return hitPos.Dist(endPos) < 1;
         }
 
-        public static MyPosition GetHitPos(MyPosition startPos, MyPosition endPos, MyGame game, double bulletSpeed, bool stopOnEnd = true)
+        public static MyPosition GetHitPos(MyPosition startPos, MyPosition endPos, MyGame game, double bulletSpeed, MyUnit firering, bool stopOnEnd = true)
         {
             var dist = endPos.Dist(startPos);
             var time = GetShootTime(dist, bulletSpeed) * Const.Properties.TicksPerSecond * 10;
@@ -59,6 +59,13 @@ namespace aicup2019.Strategy.Services
                 var nextD = Math.Sqrt(MyPosition.Pow(x - endPos.X) + MyPosition.Pow(y - endPos.Y));
                 if (nextD > d && stopOnEnd || nextD < 1) return endPos;
                 d = nextD;
+                foreach(var u in game.Units)
+                {
+                    if (u == firering || u.Unit.PlayerId != firering.Unit.PlayerId) continue;
+                    var unit = u.Unit;
+                    if (!(Math.Abs(x - unit.Position.X) > firering.Weapon.Parameters.Bullet.Size/2 + unit.Size.X/2
+                            || Math.Abs(y - unit.Position.Y) > firering.Weapon.Parameters.Bullet.Size / 2 + unit.Size.Y / 2)) return new MyPosition(x, y);
+                }
             }
 
             return endPos;
@@ -70,22 +77,22 @@ namespace aicup2019.Strategy.Services
             if (!me.HasWeapon) return false;
             LogService.WriteLine("FireTimer: " + me.Unit.Weapon.Value.FireTimer);
             //if (me.Unit.Weapon.Value.Spread > me.Unit.Weapon.Value.Parameters.MinSpread + 0.1 && me.Center.Dist(aimPos) > 5) return false;
-            if (!CanShoot(me.Center, aimPos, game, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
+            if (!CanShoot(me.Center, aimPos, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
             return true;
         }
 
         public static bool CanPotentiallyShoot(MyUnit me, MyUnit enemy, MyGame game)
         {
             if (!me.HasWeapon) return false;
-            if (me.Unit.Weapon.Value.Spread > me.Unit.Weapon.Value.Parameters.MinSpread && me.Center.Dist(enemy.Center) > 3) return false;
-            if(me.Unit.Weapon.Value.Typ == WeaponType.RocketLauncher)
-            {
-                if (!CanShoot(me.Center, enemy.Bottom, game, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
-                return true;
-            }
 
-            if (!CanShoot(me.Center, enemy.Center, game, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
-            if (!CanShoot(me.Center, enemy.Top, game, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
+           //if(me.Unit.Weapon.Value.Typ == WeaponType.RocketLauncher)
+           //{
+           //    if (!CanShoot(me.Center, enemy.Bottom, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
+           //    return true;
+           //}
+
+            if (!CanShoot(me.Center, enemy.Center, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
+           // if (!CanShoot(me.Center, enemy.Top, game, me, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
             return true;
         }
     }
