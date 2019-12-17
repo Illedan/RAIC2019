@@ -12,7 +12,7 @@ using aicup2019.Strategy.Sim;
 using System.Threading.Tasks;
 
 
- // LastEdited: 17/12/2019 8:51 
+ // LastEdited: 17/12/2019 21:35 
 
 
 namespace aicup2019.Strategy
@@ -72,6 +72,7 @@ namespace aicup2019.Strategy
 
         public double Dist() => Math.Sqrt(X * X + Y * Y);
         public double Dist(MyPosition p2) => Math.Sqrt(Pow(X - p2.X) + Pow(Y - p2.Y));
+        public double XDist(MyPosition p2) => Math.Abs(X - p2.X);
 
         public static double Pow(double x) => x * x;
 
@@ -161,8 +162,8 @@ namespace aicup2019.Strategy
             new  MyAction{ JumpUp = false, JumpDown = false, Dx = 1},
             new  MyAction{ JumpUp = false, JumpDown = true, Dx = -1},
             new  MyAction{ JumpUp = false, JumpDown = true, Dx = 1},
-            new  MyAction{ JumpUp = false, JumpDown = true, Dx = 0},
-            new  MyAction{ JumpUp = true, JumpDown = false, Dx = 0},
+           // new  MyAction{ JumpUp = false, JumpDown = true, Dx = 0},
+           // new  MyAction{ JumpUp = true, JumpDown = false, Dx = 0},
         };
 
         public static List<MyAction> Dummy => new List<MyAction> { Actions[4] };
@@ -191,7 +192,7 @@ namespace aicup2019.Strategy
         }
 
         private static bool m_isDone;
-        public static long m_timeout = 5;
+        public static long m_timeout = 8;
         private static int m_count;
 
         public static bool IsDone()
@@ -415,6 +416,7 @@ public class MyStrategy
         action.SwapWeapon = SwapService.ShouldSwap(myGame);
         action.PlantMine = myGame.Me.Center.Dist(myGame.Enemy.Center) < 3;
 
+        LogService.WriteLine("DIR: " + action.Velocity);
         var spread = AimService.GetSpread(myGame, aim);
         foreach(var point in spread)
         {
@@ -445,12 +447,14 @@ namespace aicup2019.Strategy.Sim
         public int Health, _health;
         public double HalfWidth, HalffHeight, JumpTime, _jumpTime, Speed;
         public bool IsDead, CanJump, CanCancel;
+        public int TeamId;
 
         public bool HasWeapon;
 
         public SimUnit(Unit unit)
         {
             this.unit = unit;
+            TeamId = unit.PlayerId;
             HasWeapon = unit.Weapon.HasValue;
             Health = _health = unit.Health;
             HalfWidth = unit.Size.X / 2;
@@ -478,8 +482,26 @@ namespace aicup2019.Strategy.Sim
             LogService.DrawSquare(Position, HalfWidth * 2, HalffHeight * 2, dmged? 1f: 0.3f, 0.6f, 0);
         }
 
-        public void ApplyAction(MyAction action, SimGame game, double dt)
+        public bool IsInside(double x, double y)
         {
+            var x1 = Position.X - HalfWidth;
+            var y1 = Position.Y - HalffHeight;
+            var x2 = Position.X + HalfWidth;
+            var y2 = Position.Y + HalffHeight;
+
+            var xx1 = x - HalfWidth;
+            var yy1 = y - HalffHeight;
+            var xx2 = x + HalfWidth;
+            var yy2 = y + HalffHeight;
+
+
+            return (xx2 >= x1 && xx1 <= x2) && (yy2 >= y1 && yy1 <= y2);
+        }
+
+        private bool m_jumpUp;
+        public void ApplyAction(MyAction action, SimGame game, double dt, bool canChange)
+        {
+            if (canChange) m_jumpUp = action.JumpUp;
             var dy = -JumpSpeed;
             if (game.GetTileD(Position.X + HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad
                 || game.GetTileD(Position.X - HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad)
@@ -488,7 +510,7 @@ namespace aicup2019.Strategy.Sim
                 Speed = Const.Properties.JumpPadJumpSpeed;
                 CanCancel = false;
             }
-            if (JumpTime > 0 && (action.JumpUp || !CanCancel))
+            if (JumpTime > 0 && (m_jumpUp || !CanCancel))
             {
                 JumpTime -= dt;
                 var speed = JumpSpeed;
@@ -520,7 +542,7 @@ namespace aicup2019.Strategy.Sim
             else if (onLadder)
             {
                 JumpTime = MaxJumpTime;
-                if (action.JumpUp)
+                if (m_jumpUp)
                 {
                     y = Position.Y + JumpSpeed * dt;
                 }
@@ -546,9 +568,29 @@ namespace aicup2019.Strategy.Sim
                 }
             }
 
+            foreach (var u in game.Units)
+            {
+                if (u == this) continue;
+                if (u.IsInside(Position.X, y))
+                {
+                    y = Position.Y;
+                    break;
+                }
+            }
+
             var x = Position.X + action.Dx * MyAction.GetSpeed * dt;
             if (game.GetTileD(x + HalfWidth * action.Dx, Position.Y + HalffHeight) == Tile.Wall
                 || game.GetTileD(x + HalfWidth * action.Dx, Position.Y - HalffHeight) == Tile.Wall) x = Position.X;
+
+            foreach (var u in game.Units)
+            {
+                if (u == this) continue;
+                if (u.IsInside(x, y))
+                {
+                    x = Position.X;
+                    break;
+                }
+            }
 
             Position.X = x;
             Position.Y = y;
@@ -734,32 +776,34 @@ namespace aicup2019.Strategy.Services
         {
             var steps = Const.Steps * Const.DepthPerMove;
             var hp = target.Health;
-            double d = DistService.GetDist(target.Position, Target) - target.Position.Dist(Target) * 0.1;
+            double d = target.HasWeapon ? DistService.GetDist(target.Position, Target) : target.Position.XDist(Target)*10;
             var score = 0;
             for (var i = 0; i < moves.Length; i++)
             {
                 var move = moves[i];
                 Const.Sims += Const.DepthPerMove;
+                var timer = 0;
                 for (var s = 0; s < steps; s++)
                 {
                     foreach(var u in game.Units)
                     {
-                        u.ApplyAction(u == target ? move : MyAction.DoNothing, game, Const.Time);
+                        u.ApplyAction(u == target ? move : MyAction.DoNothing, game, Const.Time, timer == 0);
                     }
 
                     foreach(var b in game.Bullets)
                     {
                         b.Move(game, Const.Time);
                     }
+                    if (timer-- <= 0) timer = Const.Steps;
                 }
                 if(target.HasWeapon)
                     foreach(var u in game.Units)
                     {
-                        if (u == target) continue;
-                        if(Math.Abs(u.Position.X-target.Position.X) < 3 && Math.Abs(u.Position.Y-target.Position.Y) < 4) 
-                            score -= 100;
+                        if (u == target || u.TeamId != target.TeamId) continue;
+                        if(Math.Abs(u.Position.X-target.Position.X) < 1.6 && Math.Abs(u.Position.Y-target.Position.Y) < 3.6) 
+                            score -= 1000;
                     }
-                d = Math.Min(d, DistService.GetDist(target.Position, Target) - target.Position.Dist(Target) * 0.1 + (i+1)*0.1);
+                d +=  DistService.GetDist(target.Position, Target) + (target.Position.XDist(Target)*10);
 
                 if (Draw)
                 {
@@ -821,6 +865,32 @@ namespace aicup2019.Strategy.Services
         {
             Game = game;
             if (m_isRun) return;
+            for(var i = game.game.Height-1; i >= 0; i--)
+            {
+                var line = "";
+                for(var j = 0; j < game.game.Width; j++)
+                {
+                    var tile = game.game.Game.Level.Tiles[j][i];
+                    if (tile == AiCup2019.Model.Tile.Wall) line += "#";
+                    else if (tile == AiCup2019.Model.Tile.Ladder) line += "H";
+                    else if (tile == AiCup2019.Model.Tile.Platform) line += "^";
+                    else if (tile == AiCup2019.Model.Tile.JumpPad) line += "T";
+                    else
+                    {
+                        var possible = ".";
+                        foreach(var unit in game.game.Units)
+                        {
+                            var X = (int)unit.Bottom.X;
+                            var Y = (int)unit.Bottom.Y;
+                            if (X == j && Y == i) possible = "P";
+                        }
+
+                        line += possible;
+                    }
+                }
+                Console.Error.WriteLine(line);
+            }
+
             var t = Const.GetTime;
             m_isRun = true;
             var max = Game.game.Width * Game.game.Height;
@@ -927,6 +997,8 @@ namespace aicup2019.Strategy.Services
 
                 if (posses.Any(p => p.Dist(startPos) < p.Dist(endPos) && p.Dist(endPos) > game.Me.Weapon.Parameters.Explosion.Value.Radius))
                     return false;
+
+                if (game.Enemy.Center.Dist(endPos) - game.Me.Weapon.Parameters.Explosion.Value.Radius > game.Me.Center.Dist(endPos)) return false;
             }
 
             return hitPos.Dist(endPos) < 1;
@@ -935,7 +1007,7 @@ namespace aicup2019.Strategy.Services
         public static MyPosition GetHitPos(MyPosition startPos, MyPosition endPos, MyGame game, double bulletSpeed, MyUnit firering, bool stopOnEnd = true)
         {
             var dist = endPos.Dist(startPos);
-            var time = GetShootTime(dist, bulletSpeed) * Const.Properties.TicksPerSecond * 10;
+            var time = GetShootTime(dist, bulletSpeed) * Const.Properties.TicksPerSecond * 100;
             var dx = (endPos.X - startPos.X) / time;
             var dy = (endPos.Y - startPos.Y) / time;
             var x = startPos.X;
@@ -953,7 +1025,7 @@ namespace aicup2019.Strategy.Services
                 tile = game.GetTile(x + game.Me.Weapon.Parameters.Bullet.Size * 0.5, y - game.Me.Weapon.Parameters.Bullet.Size * 0.5);
                 if (tile == Tile.Wall) return new MyPosition(x, y);
                 var nextD = Math.Sqrt(MyPosition.Pow(x - endPos.X) + MyPosition.Pow(y - endPos.Y));
-                if (nextD > d && stopOnEnd || nextD < 1) return endPos;
+                if (nextD > d && stopOnEnd || nextD < 0.3) return endPos;
                 d = nextD;
                 foreach(var u in game.Units)
                 {
@@ -981,11 +1053,11 @@ namespace aicup2019.Strategy.Services
         {
             if (!me.HasWeapon) return false;
 
-           //if(me.Unit.Weapon.Value.Typ == WeaponType.RocketLauncher)
-           //{
-           //    if (!CanShoot(me.Center, enemy.Bottom, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
-           //    return true;
-           //}
+           if(me.Unit.Weapon.Value.Typ == WeaponType.RocketLauncher)
+           {
+               if (!CanShoot(me.Center, enemy.Bottom, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
+               return true;
+           }
 
             if (!CanShoot(me.Center, enemy.Center, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
            // if (!CanShoot(me.Center, enemy.Top, game, me, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
@@ -1068,7 +1140,7 @@ namespace aicup2019.Strategy.Services
         private static MyPosition GetHealing(MyGame game)
         {
             LogService.WriteLine("HEAL");
-            var target = game.HealthPacks.OrderBy(p => DistService.GetDist(p,game.Me.Center)).FirstOrDefault(h => DistService.GetDist(h,game.Me.Center) < h.Dist(game.Enemy.Center));
+            var target = game.HealthPacks.OrderBy(p => DistService.GetDist(p,game.Me.Center)).FirstOrDefault(h => DistService.GetDist(h,game.Me.Center) < DistService.GetDist(h, game.Enemy.Center));
             if (target == null) target = game.HealthPacks.OrderBy(p => DistService.GetDist(p,game.Me.Center)).First();
             return target;
         }
@@ -1082,10 +1154,12 @@ namespace aicup2019.Strategy.Services
 
         private static MyPosition Attack(MyGame game)
         {
-            var diff = 5;
+            var diff = 15;
             if (game.Game.CurrentTick > 1000 && game.ScoreDiff <= 0) diff = 3;
             var target= game.Enemy.Center.MoveTowards(game.Me.Center, diff);
-            return new MyPosition(target.X, Math.Min(target.Y, game.Height - 2));
+            if (target.X >= game.Width || target.X < 0) diff *= -1;
+            target = game.Enemy.Center.MoveTowards(game.Me.Center, diff);
+            return new MyPosition(target.X, Math.Min(target.Y+5, game.Height - 2));
            //LogService.WriteLine("ATTACK");
            //var diff = 10;
            //if (game.Game.CurrentTick > 1000 && game.ScoreDiff < 0) diff = 0;
@@ -1100,7 +1174,7 @@ namespace aicup2019.Strategy.Services
 {
     public static class LogService
     {
-        public static bool m_debug = false;
+        public static bool m_debug = true;
         public static void WriteLine(this string line)
         {
             if (!m_debug) return;
@@ -1153,20 +1227,13 @@ namespace aicup2019.Strategy.Services
             foreach(var act in MyAction.Actions)
             {
                 Repeat(Temp, act);
-                Score(game, unit, targetPos, true);
-            }
-
-            foreach (var act in MyAction.Actions.Take(2))
-            {
-                Repeat(Temp, act);
-                Temp[0] = MyAction.DoNothing;
-                Score(game, unit, targetPos);
+                Score(game, unit, targetPos, false);
             }
 
            // if (!game.Bullets.Any()) return Best;
             while (!Const.IsDone())
             {
-                if (rnd.NextDouble() < 0.3) Randomize(Temp);
+                if (rnd.NextDouble() < 0.8) Randomize(Temp);
                 else Mutate(Temp, Best);
                 Score(game, unit, targetPos);
             }
@@ -1177,14 +1244,15 @@ namespace aicup2019.Strategy.Services
         public static void Score(SimGame game, SimUnit unit, MyPosition targetPos, bool draw = false)
         {
             var score = SimService.ScoreDir(game, Temp, targetPos, unit, draw);
-            game.Reset();
             if(score > bestScore)
             {
                 bestScore = score;
                 var tmp = Best;
                 Best = Temp;
                 Temp = tmp;
+                //Console.Error.WriteLine("BestScore: " + bestScore + " " + targetPos.X + " " + targetPos.Y + " " + unit.Position.X + " " + unit.Position.Y);
             }
+            game.Reset();
         }
 
         public static void Randomize(MyAction[] actions)
@@ -1238,12 +1306,12 @@ namespace aicup2019.Strategy.Services
             // Med mindre eg er på vei mot han? For da kan eg 
             if (!game.Me.HasWeapon) return game.Enemy.Center;
             var dist = game.Me.Center.Dist(game.Enemy.Center);
-            var requested = game.Enemy.Center;
-            //if (dist < 7) requested = game.Enemy.Center;
+            var requested = game.Me.Weapon.Typ == AiCup2019.Model.WeaponType.RocketLauncher ? GetClosestGround(game) : game.Enemy.Center;
+            if (dist < 3 || Math.Abs(game.Enemy.Center.Y-game.Me.Center.Y) < 0.1) requested = game.Enemy.Center;
             //requested = game.Enemy.GetEndPos(game);
             var angle = Math.Atan2(requested.Y - game.Me.Center.Y, requested.X - game.Me.Center.X);
             var prevAngle = game.Me.Unit.Weapon.Value.LastAngle.HasValue ? game.Me.Unit.Weapon.Value.LastAngle.Value : angle;
-            if (Math.Abs(angle - prevAngle) < 0.05 || game.Me.Weapon.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.1) angle = prevAngle;
+            if (Math.Abs(angle - prevAngle) < 0.1 || game.Me.Weapon.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.15) angle = prevAngle;
            //else if(!ShootService.CanShoot(game.Me.Center,game.Enemy.Center, game, game.Me.Weapon.Parameters.Bullet.Speed))
            //{
            //    angle = prevAngle;
@@ -1251,6 +1319,25 @@ namespace aicup2019.Strategy.Services
             var dx = Math.Cos(angle)*dist;
             var dy = Math.Sin(angle)*dist;
             return new MyPosition(game.Me.Center.X + dx, game.Me.Center.Y + dy);
+        }
+
+        public static MyPosition GetClosestGround(MyGame game) 
+        {
+            var heights = game.GetHeights();
+            var enemy = game.Enemy.Center;
+            var d = 100000.0;
+            var best = game.Enemy.Center;
+            for(var i = 0; i < heights.Length; i++)
+            {
+                var p = new MyPosition(i, heights[i]);
+                var dd = Math.Abs(p.Y - enemy.Y) + Math.Abs(p.X - enemy.X)*5;
+                if (dd < d)
+                {
+                    best = p;
+                    d = dd;
+                }
+            }
+            return best;
         }
 
         public static MyPosition[] GetSpread(MyGame game, MyPosition aim)

@@ -16,8 +16,8 @@ namespace aicup2019.Strategy
             new  MyAction{ JumpUp = false, JumpDown = false, Dx = 1},
             new  MyAction{ JumpUp = false, JumpDown = true, Dx = -1},
             new  MyAction{ JumpUp = false, JumpDown = true, Dx = 1},
-            new  MyAction{ JumpUp = false, JumpDown = true, Dx = 0},
-            new  MyAction{ JumpUp = true, JumpDown = false, Dx = 0},
+           // new  MyAction{ JumpUp = false, JumpDown = true, Dx = 0},
+           // new  MyAction{ JumpUp = true, JumpDown = false, Dx = 0},
         };
 
         public static List<MyAction> Dummy => new List<MyAction> { Actions[4] };

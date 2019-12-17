@@ -8,16 +8,16 @@ namespace aicup2019.Strategy.Services
         public static bool ShouldSwap(MyGame game)
         {
             if (!game.Me.HasWeapon ) return true;
-            if (game.Me.Weapon.Typ == WeaponType.RocketLauncher) return false;
+            if (game.Me.Weapon.Typ == WeaponType.AssaultRifle) return false;
             var weaponBoxes = game.Weapons;
             var closest = weaponBoxes.OrderBy(w => new MyPosition(w.Position).Dist(game.Me.Center)).Cast<LootBox?>().FirstOrDefault();
             if (closest == null) return false;
             var weapon = closest.Value.Item as Item.Weapon;
             var rect = Rect.FromMovingBullet(closest.Value.Position, closest.Value.Size.X);
-            if (rect.Overlapping(game.Me.Size))
+            if (rect.Overlapping(game.Me.Size) && game.Me.Weapon.Typ != weapon.WeaponType)
             {
+                if (weapon.WeaponType == WeaponType.AssaultRifle) return true;
                 if (weapon.WeaponType == WeaponType.RocketLauncher) return true;
-                if (weapon.WeaponType == WeaponType.Pistol) return true;
                 //return weapon.WeaponType > game.Me.Weapon.Typ;
             }
             return false;

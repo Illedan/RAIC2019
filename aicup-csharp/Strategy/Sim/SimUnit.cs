@@ -13,12 +13,14 @@ namespace aicup2019.Strategy.Sim
         public int Health, _health;
         public double HalfWidth, HalffHeight, JumpTime, _jumpTime, Speed;
         public bool IsDead, CanJump, CanCancel;
+        public int TeamId;
 
         public bool HasWeapon;
 
         public SimUnit(Unit unit)
         {
             this.unit = unit;
+            TeamId = unit.PlayerId;
             HasWeapon = unit.Weapon.HasValue;
             Health = _health = unit.Health;
             HalfWidth = unit.Size.X / 2;
@@ -46,8 +48,26 @@ namespace aicup2019.Strategy.Sim
             LogService.DrawSquare(Position, HalfWidth * 2, HalffHeight * 2, dmged? 1f: 0.3f, 0.6f, 0);
         }
 
-        public void ApplyAction(MyAction action, SimGame game, double dt)
+        public bool IsInside(double x, double y)
         {
+            var x1 = Position.X - HalfWidth;
+            var y1 = Position.Y - HalffHeight;
+            var x2 = Position.X + HalfWidth;
+            var y2 = Position.Y + HalffHeight;
+
+            var xx1 = x - HalfWidth;
+            var yy1 = y - HalffHeight;
+            var xx2 = x + HalfWidth;
+            var yy2 = y + HalffHeight;
+
+
+            return (xx2 >= x1 && xx1 <= x2) && (yy2 >= y1 && yy1 <= y2);
+        }
+
+        private bool m_jumpUp;
+        public void ApplyAction(MyAction action, SimGame game, double dt, bool canChange)
+        {
+            if (canChange) m_jumpUp = action.JumpUp;
             var dy = -JumpSpeed;
             if (game.GetTileD(Position.X + HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad
                 || game.GetTileD(Position.X - HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad)
@@ -56,7 +76,7 @@ namespace aicup2019.Strategy.Sim
                 Speed = Const.Properties.JumpPadJumpSpeed;
                 CanCancel = false;
             }
-            if (JumpTime > 0 && (action.JumpUp || !CanCancel))
+            if (JumpTime > 0 && (m_jumpUp || !CanCancel))
             {
                 JumpTime -= dt;
                 var speed = JumpSpeed;
@@ -88,7 +108,7 @@ namespace aicup2019.Strategy.Sim
             else if (onLadder)
             {
                 JumpTime = MaxJumpTime;
-                if (action.JumpUp)
+                if (m_jumpUp)
                 {
                     y = Position.Y + JumpSpeed * dt;
                 }
@@ -114,9 +134,29 @@ namespace aicup2019.Strategy.Sim
                 }
             }
 
+            foreach (var u in game.Units)
+            {
+                if (u == this) continue;
+                if (u.IsInside(Position.X, y))
+                {
+                    y = Position.Y;
+                    break;
+                }
+            }
+
             var x = Position.X + action.Dx * MyAction.GetSpeed * dt;
             if (game.GetTileD(x + HalfWidth * action.Dx, Position.Y + HalffHeight) == Tile.Wall
                 || game.GetTileD(x + HalfWidth * action.Dx, Position.Y - HalffHeight) == Tile.Wall) x = Position.X;
+
+            foreach (var u in game.Units)
+            {
+                if (u == this) continue;
+                if (u.IsInside(x, y))
+                {
+                    x = Position.X;
+                    break;
+                }
+            }
 
             Position.X = x;
             Position.Y = y;

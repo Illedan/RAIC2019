@@ -9,12 +9,12 @@ namespace aicup2019.Strategy.Services
             // Med mindre eg er på vei mot han? For da kan eg 
             if (!game.Me.HasWeapon) return game.Enemy.Center;
             var dist = game.Me.Center.Dist(game.Enemy.Center);
-            var requested = game.Enemy.Center;
-            //if (dist < 7) requested = game.Enemy.Center;
+            var requested = game.Me.Weapon.Typ == AiCup2019.Model.WeaponType.RocketLauncher ? GetClosestGround(game) : game.Enemy.Center;
+            if (dist < 3 || Math.Abs(game.Enemy.Center.Y-game.Me.Center.Y) < 0.1) requested = game.Enemy.Center;
             //requested = game.Enemy.GetEndPos(game);
             var angle = Math.Atan2(requested.Y - game.Me.Center.Y, requested.X - game.Me.Center.X);
             var prevAngle = game.Me.Unit.Weapon.Value.LastAngle.HasValue ? game.Me.Unit.Weapon.Value.LastAngle.Value : angle;
-            if (Math.Abs(angle - prevAngle) < 0.05 || game.Me.Weapon.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.1) angle = prevAngle;
+            if (Math.Abs(angle - prevAngle) < 0.05 || game.Me.Weapon.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.15) angle = prevAngle;
            //else if(!ShootService.CanShoot(game.Me.Center,game.Enemy.Center, game, game.Me.Weapon.Parameters.Bullet.Speed))
            //{
            //    angle = prevAngle;
@@ -22,6 +22,25 @@ namespace aicup2019.Strategy.Services
             var dx = Math.Cos(angle)*dist;
             var dy = Math.Sin(angle)*dist;
             return new MyPosition(game.Me.Center.X + dx, game.Me.Center.Y + dy);
+        }
+
+        public static MyPosition GetClosestGround(MyGame game) 
+        {
+            var heights = game.GetHeights();
+            var enemy = game.Enemy.Center;
+            var d = 100000.0;
+            var best = game.Enemy.Center;
+            for(var i = 0; i < heights.Length; i++)
+            {
+                var p = new MyPosition(i, heights[i]);
+                var dd = Math.Abs(p.Y - enemy.Y) + Math.Abs(p.X - enemy.X)*5;
+                if (dd < d)
+                {
+                    best = p;
+                    d = dd;
+                }
+            }
+            return best;
         }
 
         public static MyPosition[] GetSpread(MyGame game, MyPosition aim)

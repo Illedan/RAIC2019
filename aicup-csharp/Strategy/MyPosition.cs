@@ -24,6 +24,7 @@ namespace aicup2019.Strategy
 
         public double Dist() => Math.Sqrt(X * X + Y * Y);
         public double Dist(MyPosition p2) => Math.Sqrt(Pow(X - p2.X) + Pow(Y - p2.Y));
+        public double XDist(MyPosition p2) => Math.Abs(X - p2.X);
 
         public static double Pow(double x) => x * x;
 

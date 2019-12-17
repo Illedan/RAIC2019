@@ -31,6 +31,8 @@ namespace aicup2019.Strategy.Services
 
                 if (posses.Any(p => p.Dist(startPos) < p.Dist(endPos) && p.Dist(endPos) > game.Me.Weapon.Parameters.Explosion.Value.Radius))
                     return false;
+
+                if (game.Enemy.Center.Dist(endPos) - game.Me.Weapon.Parameters.Explosion.Value.Radius > game.Me.Center.Dist(endPos)) return false;
             }
 
             return hitPos.Dist(endPos) < 1;
@@ -39,7 +41,7 @@ namespace aicup2019.Strategy.Services
         public static MyPosition GetHitPos(MyPosition startPos, MyPosition endPos, MyGame game, double bulletSpeed, MyUnit firering, bool stopOnEnd = true)
         {
             var dist = endPos.Dist(startPos);
-            var time = GetShootTime(dist, bulletSpeed) * Const.Properties.TicksPerSecond * 10;
+            var time = GetShootTime(dist, bulletSpeed) * Const.Properties.TicksPerSecond * 100;
             var dx = (endPos.X - startPos.X) / time;
             var dy = (endPos.Y - startPos.Y) / time;
             var x = startPos.X;
@@ -57,7 +59,7 @@ namespace aicup2019.Strategy.Services
                 tile = game.GetTile(x + game.Me.Weapon.Parameters.Bullet.Size * 0.5, y - game.Me.Weapon.Parameters.Bullet.Size * 0.5);
                 if (tile == Tile.Wall) return new MyPosition(x, y);
                 var nextD = Math.Sqrt(MyPosition.Pow(x - endPos.X) + MyPosition.Pow(y - endPos.Y));
-                if (nextD > d && stopOnEnd || nextD < 1) return endPos;
+                if (nextD > d && stopOnEnd || nextD < 0.3) return endPos;
                 d = nextD;
                 foreach(var u in game.Units)
                 {
@@ -85,11 +87,11 @@ namespace aicup2019.Strategy.Services
         {
             if (!me.HasWeapon) return false;
 
-           //if(me.Unit.Weapon.Value.Typ == WeaponType.RocketLauncher)
-           //{
-           //    if (!CanShoot(me.Center, enemy.Bottom, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
-           //    return true;
-           //}
+           if(me.Unit.Weapon.Value.Typ == WeaponType.RocketLauncher)
+           {
+               if (!CanShoot(me.Center, enemy.Bottom, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
+               return true;
+           }
 
             if (!CanShoot(me.Center, enemy.Center, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
            // if (!CanShoot(me.Center, enemy.Top, game, me, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;

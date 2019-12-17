@@ -20,20 +20,13 @@ namespace aicup2019.Strategy.Services
             foreach(var act in MyAction.Actions)
             {
                 Repeat(Temp, act);
-                Score(game, unit, targetPos, true);
-            }
-
-            foreach (var act in MyAction.Actions.Take(2))
-            {
-                Repeat(Temp, act);
-                Temp[0] = MyAction.DoNothing;
-                Score(game, unit, targetPos);
+                Score(game, unit, targetPos, false);
             }
 
            // if (!game.Bullets.Any()) return Best;
             while (!Const.IsDone())
             {
-                if (rnd.NextDouble() < 0.3) Randomize(Temp);
+                if (rnd.NextDouble() < 0.8) Randomize(Temp);
                 else Mutate(Temp, Best);
                 Score(game, unit, targetPos);
             }
@@ -44,14 +37,15 @@ namespace aicup2019.Strategy.Services
         public static void Score(SimGame game, SimUnit unit, MyPosition targetPos, bool draw = false)
         {
             var score = SimService.ScoreDir(game, Temp, targetPos, unit, draw);
-            game.Reset();
             if(score > bestScore)
             {
                 bestScore = score;
                 var tmp = Best;
                 Best = Temp;
                 Temp = tmp;
+                //Console.Error.WriteLine("BestScore: " + bestScore + " " + targetPos.X + " " + targetPos.Y + " " + unit.Position.X + " " + unit.Position.Y);
             }
+            game.Reset();
         }
 
         public static void Randomize(MyAction[] actions)

@@ -53,6 +53,32 @@ namespace aicup2019.Strategy.Services
         {
             Game = game;
             if (m_isRun) return;
+            for(var i = game.game.Height-1; i >= 0; i--)
+            {
+                var line = "";
+                for(var j = 0; j < game.game.Width; j++)
+                {
+                    var tile = game.game.Game.Level.Tiles[j][i];
+                    if (tile == AiCup2019.Model.Tile.Wall) line += "#";
+                    else if (tile == AiCup2019.Model.Tile.Ladder) line += "H";
+                    else if (tile == AiCup2019.Model.Tile.Platform) line += "^";
+                    else if (tile == AiCup2019.Model.Tile.JumpPad) line += "T";
+                    else
+                    {
+                        var possible = ".";
+                        foreach(var unit in game.game.Units)
+                        {
+                            var X = (int)unit.Bottom.X;
+                            var Y = (int)unit.Bottom.Y;
+                            if (X == j && Y == i) possible = "P";
+                        }
+
+                        line += possible;
+                    }
+                }
+                Console.Error.WriteLine(line);
+            }
+
             var t = Const.GetTime;
             m_isRun = true;
             var max = Game.game.Width * Game.game.Height;

@@ -57,6 +57,7 @@ public class MyStrategy
         action.SwapWeapon = SwapService.ShouldSwap(myGame);
         action.PlantMine = myGame.Me.Center.Dist(myGame.Enemy.Center) < 3;
 
+        LogService.WriteLine("DIR: " + action.Velocity);
         var spread = AimService.GetSpread(myGame, aim);
         foreach(var point in spread)
         {

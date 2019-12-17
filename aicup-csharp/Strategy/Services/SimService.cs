@@ -18,32 +18,34 @@ namespace aicup2019.Strategy.Services
         {
             var steps = Const.Steps * Const.DepthPerMove;
             var hp = target.Health;
-            double d = DistService.GetDist(target.Position, Target) - target.Position.Dist(Target) * 0.1;
+            double d = target.HasWeapon ? DistService.GetDist(target.Position, Target) : target.Position.XDist(Target)*10;
             var score = 0;
             for (var i = 0; i < moves.Length; i++)
             {
                 var move = moves[i];
                 Const.Sims += Const.DepthPerMove;
+                var timer = 0;
                 for (var s = 0; s < steps; s++)
                 {
                     foreach(var u in game.Units)
                     {
-                        u.ApplyAction(u == target ? move : MyAction.DoNothing, game, Const.Time);
+                        u.ApplyAction(u == target ? move : MyAction.DoNothing, game, Const.Time, timer == 0);
                     }
 
                     foreach(var b in game.Bullets)
                     {
                         b.Move(game, Const.Time);
                     }
+                    if (timer-- <= 0) timer = Const.Steps;
                 }
                 if(target.HasWeapon)
                     foreach(var u in game.Units)
                     {
                         if (u == target) continue;
-                        if(Math.Abs(u.Position.X-target.Position.X) < 3 && Math.Abs(u.Position.Y-target.Position.Y) < 4) 
-                            score -= 100;
+                        if(Math.Abs(u.Position.X-target.Position.X) < 1.6 && Math.Abs(u.Position.Y-target.Position.Y) < 3.6) 
+                            score -= 1000;
                     }
-                d = Math.Min(d, DistService.GetDist(target.Position, Target) - target.Position.Dist(Target) * 0.1 + (i+1)*0.1);
+                d +=  DistService.GetDist(target.Position, Target) + (target.Position.XDist(Target)*10);
 
                 if (Draw)
                 {

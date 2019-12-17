@@ -16,7 +16,7 @@ namespace aicup2019.Strategy.Sim
             _position = Position.Clone;
             Dx = bullet.Velocity.X;
             Dy = bullet.Velocity.Y;
-            HalfSize = bullet.Size / 2;
+            HalfSize = bullet.Size / 2 + bullet.Size * 0.1;
             ExplosionSize = bullet.ExplosionParameters.HasValue ? bullet.ExplosionParameters.Value.Radius : 0.0;
         }
 
