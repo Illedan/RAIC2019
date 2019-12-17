@@ -14,7 +14,6 @@ namespace aicup2019.Strategy.Sim
         public double HalfWidth, HalffHeight, JumpTime, _jumpTime, Speed;
         public bool IsDead, CanJump, CanCancel;
 
-
         public SimUnit(Unit unit)
         {
             this.unit = unit;

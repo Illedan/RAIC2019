@@ -6,7 +6,7 @@ namespace aicup2019.Strategy.Services
 {
     public static class LogService
     {
-        public static bool m_debug = false;
+        public static bool m_debug = true;
         public static void WriteLine(this string line)
         {
             if (!m_debug) return;

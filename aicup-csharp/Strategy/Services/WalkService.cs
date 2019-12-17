@@ -35,9 +35,6 @@ namespace aicup2019.Strategy.Services
                 var d = DistService.GetDist(p, game.Me.Center);
                 if (d < game.Width * game.Height * 4)
                 {
-                    LogService.m_debug = true;
-                    LogService.WriteLine("DIST TARGET: " + d + " TARGET: " + p.X + " " + p.Y);
-                    LogService.m_debug = false;
                     target = p;
                     break;
                 }
@@ -50,15 +47,6 @@ namespace aicup2019.Strategy.Services
         private static MyPosition GetWeapon(MyGame game)
         {
             LogService.WriteLine("WEAPON");
-            foreach(var w in game.Weapons)
-            {
-                var p = new MyPosition(w.Position);
-                var dist = DistService.GetDist(p, game.Me.Center);
-                LogService.m_debug = true;
-                LogService.DrawLineBetweenCenter(p, game.Me.Center, 0,1,0);
-                LogService.WriteLine("DIST: " + dist);
-                LogService.m_debug = false;
-            }
             return new MyPosition(game.Weapons.OrderBy(p => DistService.GetDist(new MyPosition(p.Position), game.Me.Center)).First().Position);
         }
 
@@ -74,8 +62,7 @@ namespace aicup2019.Strategy.Services
         {
             LogService.WriteLine("HIDE");
             var heights = game.GetHideouts();
-
-            return heights.OrderByDescending(p => DistService.GetDist(p,game.Enemy.Center) - DistService.GetDist(game.Me.Center,p)*0.5).First();
+            return heights.OrderByDescending(p => DistService.GetDist(p,game.Enemy.Center) - DistService.GetDist(game.Me.Center,p)*0.5).FirstOrDefault() ?? game.Enemy.Center;
         }
 
         private static MyPosition Attack(MyGame game)

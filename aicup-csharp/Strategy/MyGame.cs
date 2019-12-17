@@ -64,10 +64,10 @@ namespace aicup2019.Strategy
         {
             var heights = GetHeights();
             var hideouts = new List<MyPosition>();
-            for(var i = 2; i < heights.Length-2; i++)
+            for(var i = 4; i < heights.Length-4; i++)
             {
                 var h = heights[i];
-                if (heights[i - 1] + 1 < h || heights[i + 1] < h) hideouts.Add(new MyPosition(i, heights[i]+1));
+                if (heights[i - 1] + 2 < h || heights[i + 1] + 2 < h) hideouts.Add(new MyPosition(i, heights[i]+1));
             }
             return hideouts;
         }
