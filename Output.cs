@@ -12,7 +12,7 @@ using aicup2019.Strategy.Sim;
 using System.Threading.Tasks;
 
 
- // LastEdited: 17/12/2019 21:35 
+ // LastEdited: 17/12/2019 23:39 
 
 
 namespace aicup2019.Strategy
@@ -192,7 +192,7 @@ namespace aicup2019.Strategy
         }
 
         private static bool m_isDone;
-        public static long m_timeout = 8;
+        public static long m_timeout = 5;
         private static int m_count;
 
         public static bool IsDone()
@@ -614,7 +614,7 @@ namespace aicup2019.Strategy.Sim
             _position = Position.Clone;
             Dx = bullet.Velocity.X;
             Dy = bullet.Velocity.Y;
-            HalfSize = bullet.Size / 2;
+            HalfSize = bullet.Size / 2 + bullet.Size * 0.1;
             ExplosionSize = bullet.ExplosionParameters.HasValue ? bullet.ExplosionParameters.Value.Radius : 0.0;
         }
 
@@ -799,7 +799,7 @@ namespace aicup2019.Strategy.Services
                 if(target.HasWeapon)
                     foreach(var u in game.Units)
                     {
-                        if (u == target || u.TeamId != target.TeamId) continue;
+                        if (u == target) continue;
                         if(Math.Abs(u.Position.X-target.Position.X) < 1.6 && Math.Abs(u.Position.Y-target.Position.Y) < 3.6) 
                             score -= 1000;
                     }
@@ -1072,16 +1072,16 @@ namespace aicup2019.Strategy.Services
         public static bool ShouldSwap(MyGame game)
         {
             if (!game.Me.HasWeapon ) return true;
-            if (game.Me.Weapon.Typ == WeaponType.RocketLauncher) return false;
+            if (game.Me.Weapon.Typ == WeaponType.AssaultRifle) return false;
             var weaponBoxes = game.Weapons;
             var closest = weaponBoxes.OrderBy(w => new MyPosition(w.Position).Dist(game.Me.Center)).Cast<LootBox?>().FirstOrDefault();
             if (closest == null) return false;
             var weapon = closest.Value.Item as Item.Weapon;
             var rect = Rect.FromMovingBullet(closest.Value.Position, closest.Value.Size.X);
-            if (rect.Overlapping(game.Me.Size))
+            if (rect.Overlapping(game.Me.Size) && game.Me.Weapon.Typ != weapon.WeaponType)
             {
+                if (weapon.WeaponType == WeaponType.AssaultRifle) return true;
                 if (weapon.WeaponType == WeaponType.RocketLauncher) return true;
-                if (weapon.WeaponType == WeaponType.Pistol) return true;
                 //return weapon.WeaponType > game.Me.Weapon.Typ;
             }
             return false;
@@ -1100,8 +1100,8 @@ namespace aicup2019.Strategy.Services
             //if (game.Game.CurrentTick > 1000) return Attack(game);
             if (!me.HasWeapon) return GetWeapon(game);
             if (allied.Count == 2 && me == allied.Last() && allied[0].Health > 20) return allied[0].Center.MoveTowards(game.Me.Center, 100);
-            var weaps = game.Weapons.Where(w => (w.Item as Item.Weapon).WeaponType == WeaponType.RocketLauncher).ToList();
-            if (me.Weapon.Typ != AiCup2019.Model.WeaponType.RocketLauncher && weaps.Any(w => me.Center.Dist(new MyPosition(w.Position)) < 4)) return new MyPosition(weaps.First(w => me.Center.Dist(new MyPosition(w.Position)) < 4).Position);
+            var weaps = game.Weapons.Where(w => (w.Item as Item.Weapon).WeaponType == WeaponType.AssaultRifle).ToList();
+            if (me.Weapon.Typ != AiCup2019.Model.WeaponType.AssaultRifle && weaps.Any(w => me.Center.Dist(new MyPosition(w.Position)) < 4)) return new MyPosition(weaps.First(w => me.Center.Dist(new MyPosition(w.Position)) < 4).Position);
             if (me.ShouldHeal && game.HasHealing) return GetHealing(game);
             //return new MyPosition(game.Enemy.Center.MoveTowards(me.Center, 3).X, game.Height-2);
             if (me.Weapon.FireTimer > 0.2 && game.Me.Center.Dist(game.Enemy.Center) < 3) return Hide(game);
@@ -1159,7 +1159,7 @@ namespace aicup2019.Strategy.Services
             var target= game.Enemy.Center.MoveTowards(game.Me.Center, diff);
             if (target.X >= game.Width || target.X < 0) diff *= -1;
             target = game.Enemy.Center.MoveTowards(game.Me.Center, diff);
-            return new MyPosition(target.X, Math.Min(target.Y+5, game.Height - 2));
+            return new MyPosition(target.X, Math.Min(target.Y+20, game.Height - 2));
            //LogService.WriteLine("ATTACK");
            //var diff = 10;
            //if (game.Game.CurrentTick > 1000 && game.ScoreDiff < 0) diff = 0;
@@ -1311,7 +1311,7 @@ namespace aicup2019.Strategy.Services
             //requested = game.Enemy.GetEndPos(game);
             var angle = Math.Atan2(requested.Y - game.Me.Center.Y, requested.X - game.Me.Center.X);
             var prevAngle = game.Me.Unit.Weapon.Value.LastAngle.HasValue ? game.Me.Unit.Weapon.Value.LastAngle.Value : angle;
-            if (Math.Abs(angle - prevAngle) < 0.1 || game.Me.Weapon.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.15) angle = prevAngle;
+            if (Math.Abs(angle - prevAngle) < 0.05 || game.Me.Weapon.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.15) angle = prevAngle;
            //else if(!ShootService.CanShoot(game.Me.Center,game.Enemy.Center, game, game.Me.Weapon.Parameters.Bullet.Speed))
            //{
            //    angle = prevAngle;
