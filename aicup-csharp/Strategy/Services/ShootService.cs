@@ -29,7 +29,7 @@ namespace aicup2019.Strategy.Services
                     LogService.DrawLine(p, game.Me.Center, 0, 0, 1);
                 }
 
-                if (posses.Any(p => p.Dist(startPos) < p.Dist(endPos) && p.Dist(endPos) > game.Me.Weapon.Parameters.Explosion.Value.Radius))
+                if (posses.Any(p => p.Dist(game.Enemy.Center) > p.Dist(game.Me.Center) && p.Dist(endPos) > game.Me.Weapon.Parameters.Explosion.Value.Radius-1))
                     return false;
 
                 if (game.Enemy.Center.Dist(endPos) - game.Me.Weapon.Parameters.Explosion.Value.Radius > game.Me.Center.Dist(endPos)) return false;

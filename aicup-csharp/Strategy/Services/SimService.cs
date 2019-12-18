@@ -18,7 +18,7 @@ namespace aicup2019.Strategy.Services
         {
             var steps = Const.Steps * Const.DepthPerMove;
             var hp = target.Health;
-            double d = target.HasWeapon ? DistService.GetDist(target.Position, Target) : target.Position.XDist(Target)*10;
+            double d = 0.0; //target.HasWeapon ? DistService.GetDist(target.Position, Target) : target.Position.XDist(Target)*10;
             var score = 0;
             for (var i = 0; i < moves.Length; i++)
             {
@@ -42,10 +42,15 @@ namespace aicup2019.Strategy.Services
                     foreach(var u in game.Units)
                     {
                         if (u == target) continue;
-                        if(Math.Abs(u.Position.X-target.Position.X) < 1.6 && Math.Abs(u.Position.Y-target.Position.Y) < 3.6) 
-                            score -= 1000;
+                        if(u.TeamId == target.TeamId)
+                            if (Math.Abs(u.Position.X - target.Position.X) < 5 && Math.Abs(u.Position.Y - target.Position.Y) < 6)
+                                score -= 1000;
+                            else
+                                if (Math.Abs(u.Position.X - target.Position.X) < 3 && Math.Abs(u.Position.Y - target.Position.Y) < 5)
+                                score -= 100;
+
                     }
-                d +=  DistService.GetDist(target.Position, Target) + (target.Position.XDist(Target)*10);
+                d +=  DistService.GetDist(target.Position, Target) + (target.Position.XDist(Target)*1);
 
                 if (Draw)
                 {

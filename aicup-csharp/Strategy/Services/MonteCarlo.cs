@@ -13,6 +13,12 @@ namespace aicup2019.Strategy.Services
         private static Random rnd = new Random(42);
         public static MyAction[] FindBest(SimGame game, SimUnit unit, MyPosition targetPos)
         {
+            if(!game.Bullets.Any() && unit.HasWeapon && game.game.Game.CurrentTick > 1000
+                 && game.game.ScoreDiff > 0
+                 && game.game.TargetDist > 10)
+            {
+                return new MyAction[] { MyAction.DoNothing };
+            }
             var depth = Const.Depth;
             Best = new MyAction[depth];
             Temp = new MyAction[depth];

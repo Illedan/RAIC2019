@@ -14,7 +14,7 @@ namespace aicup2019.Strategy.Services
             //requested = game.Enemy.GetEndPos(game);
             var angle = Math.Atan2(requested.Y - game.Me.Center.Y, requested.X - game.Me.Center.X);
             var prevAngle = game.Me.Unit.Weapon.Value.LastAngle.HasValue ? game.Me.Unit.Weapon.Value.LastAngle.Value : angle;
-            if (Math.Abs(angle - prevAngle) < 0.05 || game.Me.Weapon.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.15) angle = prevAngle;
+            if (Math.Abs(angle - prevAngle) < 0.01 || game.Me.Weapon.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.0) angle = prevAngle;
            //else if(!ShootService.CanShoot(game.Me.Center,game.Enemy.Center, game, game.Me.Weapon.Parameters.Bullet.Speed))
            //{
            //    angle = prevAngle;
