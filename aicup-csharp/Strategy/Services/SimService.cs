@@ -42,12 +42,17 @@ namespace aicup2019.Strategy.Services
                     foreach(var u in game.Units)
                     {
                         if (u == target) continue;
-                        if(u.TeamId == target.TeamId)
+                        if (u.TeamId == target.TeamId)
+                        {
                             if (Math.Abs(u.Position.X - target.Position.X) < 5 && Math.Abs(u.Position.Y - target.Position.Y) < 6)
+                            {
                                 score -= 1000;
-                            else
-                                if (Math.Abs(u.Position.X - target.Position.X) < 3 && Math.Abs(u.Position.Y - target.Position.Y) < 5)
-                                score -= 100;
+                            }
+                        }
+                        else if (Math.Abs(u.Position.X - target.Position.X) < 1.5 && Math.Abs(u.Position.Y - target.Position.Y) < 2)
+                        {
+                            score -= 100;
+                        }
 
                     }
                 d +=  DistService.GetDist(target.Position, Target) + (target.Position.XDist(Target)*1);

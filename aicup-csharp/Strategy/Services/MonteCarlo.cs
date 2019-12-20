@@ -8,28 +8,41 @@ namespace aicup2019.Strategy.Services
 {
     public static class MonteCarlo
     {
+        private static long m_lastBullet;
         private static double bestScore;
         private static MyAction[] Best, Temp;
         private static Random rnd = new Random(42);
         public static MyAction[] FindBest(SimGame game, SimUnit unit, MyPosition targetPos)
         {
-            if(!game.Bullets.Any() && unit.HasWeapon && game.game.Game.CurrentTick > 1000
+            if (game.Bullets.Any()) m_lastBullet = game.game.Game.CurrentTick;
+            if (unit.HasWeapon && 
+                game.game.Game.CurrentTick- m_lastBullet > 600
                  && game.game.ScoreDiff > 0
-                 && game.game.TargetDist > 10)
+                 && game.game.TargetDist > 5)
             {
+               //Console.Error.WriteLine("Do nothing");
                 return new MyAction[] { MyAction.DoNothing };
             }
             var depth = Const.Depth;
             Best = new MyAction[depth];
             Temp = new MyAction[depth];
             bestScore = -100000000;
-            foreach(var act in MyAction.Actions)
+            foreach(var act in MyAction.Actions.Take(7))
             {
                 Repeat(Temp, act);
                 Score(game, unit, targetPos, false);
             }
+            if (!unit.HasWeapon)
+            {
+                foreach (var act in MyAction.Actions.Take(3))
+                {
+                    Repeat(Temp, act);
+                    Temp[0] = MyAction.DoNothing;
+                    Score(game, unit, targetPos, false);
+                }
+            }
 
-           // if (!game.Bullets.Any()) return Best;
+           if (!game.Bullets.Any() && unit.HasWeapon) return Best;
             while (!Const.IsDone())
             {
                 if (rnd.NextDouble() < 0.8) Randomize(Temp);

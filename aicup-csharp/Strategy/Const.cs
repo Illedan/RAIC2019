@@ -11,12 +11,13 @@ namespace aicup2019.Strategy
         public static int Steps = 5, Depth = 20, DepthPerMove = 1;
         public static double Time;
         public static Stopwatch Stopwatch;
+        public static Random rnd = new Random();
 
         public static void Reset(Properties properties)
         {
             Evals = Sims = 0;
             Properties = properties;
-            Time = 1 / Const.Properties.TicksPerSecond / Steps;
+            Time = 1.0 / Properties.TicksPerSecond / Steps;
             Stopwatch = Stopwatch.StartNew();
             m_isDone = false;
             m_count = 0;

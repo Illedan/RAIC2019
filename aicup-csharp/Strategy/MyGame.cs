@@ -2,8 +2,6 @@
 using AiCup2019.Model;
 using System.Linq;
 using System.Diagnostics;
-using System;
-using static AiCup2019.Model.CustomData;
 using static AiCup2019.Model.Item;
 using aicup2019.Strategy.Services;
 
@@ -67,7 +65,8 @@ namespace aicup2019.Strategy
             for(var i = 4; i < heights.Length-4; i++)
             {
                 var h = heights[i];
-                if (heights[i - 1] + 2 < h || heights[i + 1] + 2 < h) hideouts.Add(new MyPosition(i, heights[i]+1));
+                var dx = i > heights.Length / 2 ? -1 : 1;
+                if (heights[i + dx] + 2 < h) hideouts.Add(new MyPosition(i, heights[i]+1));
             }
             return hideouts;
         }
@@ -103,40 +102,6 @@ namespace aicup2019.Strategy
         {
             if ((int)x >= Width || x < 0 || y < 0 || (int)y >= Width) return Tile.Wall;
             return Game.Level.Tiles[(int)x][(int)y];
-        }
-
-
-        public Vec2Float CalcBulletEnd(MyBullet bullet, double maxSpeed, out bool didHit)
-        {
-            var potentialUnits = Units.Where(u => u.Unit.Id != bullet.Bullet.UnitId).ToArray();
-            var pos = new Vec2Double(bullet.Bullet.Position.X, bullet.Bullet.Position.Y);
-            var speed = bullet.Bullet.Velocity;
-            var ticks = Const.Properties.TicksPerSecond;
-            speed = new Vec2Double(speed.X / ticks, speed.Y / ticks);
-            var i = 0;
-            didHit = false;
-            while (true)
-            {
-                pos = new Vec2Double(pos.X + speed.X, pos.Y + speed.Y);
-                if (!OnBoard(pos.X, pos.Y)) break;
-                var rect = Rect.FromMovingBullet(pos, bullet.Bullet.Size);
-                foreach (var u in potentialUnits)
-                {
-                    if (u.Size.Overlapping(rect))
-                    {
-                        didHit = true;
-                        break;
-                    }
-                }
-
-                if (didHit) break;
-
-                var tile = GetTile(pos.X, pos.Y);
-                if (tile == Tile.Wall) break;
-                i++;
-            }
-
-            return new Vec2Float((float)pos.X, (float)pos.Y);
         }
     }
 }

@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using AiCup2019.Model;
+using System.Linq;
 namespace aicup2019.Strategy.Sim
 {
     public class SimGame
     {
-        public readonly MyGame game;
+        public readonly MyGame game; 
         public List<SimUnit> Units = new List<SimUnit>();
         public List<SimBullet> Bullets = new List<SimBullet>();
+        public SimPlayer[] Players = new SimPlayer[2];
 
         public Tile[] Board;
-        public SimGame(MyGame game)
+
+        public SimGame(MyGame game, Unit myUnit)
         {
             this.game = game;
             Board = new Tile[game.Width * game.Height];
@@ -22,9 +25,12 @@ namespace aicup2019.Strategy.Sim
                 }
             }
 
-            foreach(var u in game.Units)
+            Players[0] = new SimPlayer(game.Game.Players.First(p => p.Id == myUnit.PlayerId), game.Game);
+            Players[1] = new SimPlayer(game.Game.Players.First(p => p.Id != myUnit.PlayerId), game.Game);
+
+            foreach (var player in Players)
             {
-                Units.Add(new SimUnit(u.Unit));
+                Units.AddRange(player.Units);
             }
 
             foreach(var b in game.Bullets)
@@ -40,8 +46,18 @@ namespace aicup2019.Strategy.Sim
 
         public void Reset()
         {
+            for(var i = Bullets.Count-1; i>= 0; i--)
+            {
+                if (Bullets[i].IsSimCreated)
+                {
+                    Bullets.RemoveAt(i);
+                }
+                else break;
+            }
+
             foreach (var b in Bullets) b.Reset();
             foreach (var u in Units) u.Reset();
+            BulletFactory.Reset();  
         }
     }
 }

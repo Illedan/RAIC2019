@@ -3,6 +3,7 @@
 rm ./results/*
 
 #dotnet arena/aicup2019.dll 127.0.0.1 31002 &
+#dotnet run 127.0.0.1 31002
 for i in {1..1000}
 do
     # echo "game $i"

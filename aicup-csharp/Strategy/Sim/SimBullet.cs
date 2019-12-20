@@ -5,13 +5,17 @@ namespace aicup2019.Strategy.Sim
     public class SimBullet
     {
         public readonly Bullet bullet;
-        public double Dx, Dy, HalfSize, ExplosionSize, CollisionTime = 999999, _collisionTime = 999999;
+        public double Dx, Dy, HalfSize, ExplosionSize, CollisionTime = 999999, _collisionTime = 999999,
+            TempAngle, Speed;
         public MyPosition Position, _position, EndPosition;
-        public bool IsDead;
+        public int UnitId;
+        public bool IsDead, IsSimCreated;
 
         public SimBullet(Bullet bullet)
         {
             this.bullet = bullet;
+            UnitId = bullet.UnitId;
+            Speed = Math.Sqrt(bullet.Velocity.X * bullet.Velocity.X + bullet.Velocity.Y * bullet.Velocity.Y);
             Position = new MyPosition(bullet.Position.X, bullet.Position.Y);
             _position = Position.Clone;
             Dx = bullet.Velocity.X;
@@ -30,7 +34,7 @@ namespace aicup2019.Strategy.Sim
         public void CalcCollisionTime(SimGame game)
         {
             var t = 0.0;
-            var dt = 1.0 / Const.Properties.TicksPerSecond / Const.Properties.UpdatesPerTick;
+            var dt = 1.0 / Const.Properties.TicksPerSecond / 10;
             while (true)
             {
                 t += dt;
@@ -81,7 +85,9 @@ namespace aicup2019.Strategy.Sim
             }
 
             //TODO: Check mines
-            if (CollidesWithWall(game) || CollisionTime <= 0)
+
+
+            if ((_collisionTime < 999999 && CollidesWithWall(game)) || CollisionTime <= 0)
             {
                 IsDead = true;
                 if (bullet.ExplosionParameters != null) Explode(game);
@@ -90,7 +96,7 @@ namespace aicup2019.Strategy.Sim
 
         public bool IsCollidingWith(SimUnit unit)
         {
-            if (unit.unit.Id == bullet.UnitId || unit.Health <= 0) return false;
+            if (unit.Id == UnitId || unit.Health <= 0) return false;
             if (Math.Abs(Position.X - unit.Position.X) > HalfSize + unit.HalfWidth
                 || Math.Abs(Position.Y - unit.Position.Y) > HalfSize+ unit.HalffHeight) return false;
 

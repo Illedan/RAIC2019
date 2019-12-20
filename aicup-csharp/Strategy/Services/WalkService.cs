@@ -13,15 +13,15 @@ namespace aicup2019.Strategy.Services
             //if (game.Game.CurrentTick > 1000) return Attack(game);
             if (!me.HasWeapon) return GetWeapon(game);
             //if (allied.Count == 2 && me == allied.Last() && allied[0].Health > 20) return allied[0].Center.MoveTowards(game.Me.Center, 100);
-            var weaps = game.Weapons.Where(w => (w.Item as Item.Weapon).WeaponType == WeaponType.AssaultRifle).ToList();
-            if (me.Weapon.Typ != AiCup2019.Model.WeaponType.AssaultRifle && weaps.Any(w => me.Center.Dist(new MyPosition(w.Position)) < 4)) return new MyPosition(weaps.First(w => me.Center.Dist(new MyPosition(w.Position)) < 4).Position);
+            var weaps = game.Weapons.Where(w => (w.Item as Item.Weapon).WeaponType == WeaponType.RocketLauncher).ToList();
+            if (me.Weapon.Typ != AiCup2019.Model.WeaponType.RocketLauncher && weaps.Any(w => me.Center.Dist(new MyPosition(w.Position)) < 4)) return new MyPosition(weaps.First(w => me.Center.Dist(new MyPosition(w.Position)) < 4).Position);
             if (me.ShouldHeal && game.HasHealing) return GetHealing(game);
             //return new MyPosition(game.Enemy.Center.MoveTowards(me.Center, 3).X, game.Height-2);
             if (me.Weapon.FireTimer > 0.2 && game.Me.Center.Dist(game.Enemy.Center) < 3) return Hide(game);
            //LogService.WriteLine("Diff: " + game.ScoreDiff + " Tick: " + game.Game.CurrentTick + " " + game.Width + " " + game.Height);
            if(game.TargetDist < 4 && Math.Abs(game.Me.Center.Y-game.Enemy.Center.Y) < 1) return Attack(game);
            if (game.ScoreDiff > 0) return Hide(game);
-           // if (game.ScoreDiff == 0 && game.Game.CurrentTick < 300 && game.Enemy.HasWeapon) return Hide(game);
+           if (game.ScoreDiff == 0 && game.Game.CurrentTick < 300 && game.Enemy.HasWeapon) return Hide(game);
            return Attack(game);
         }
 
@@ -67,8 +67,8 @@ namespace aicup2019.Strategy.Services
 
         private static MyPosition Attack(MyGame game)
         {
-            var diff = 3;
-            if (game.Game.CurrentTick > 1000 && game.ScoreDiff <= 0) diff = 1;
+            var diff = 10;
+            if (game.Game.CurrentTick > 3000 && game.ScoreDiff <= 0) diff = 3;
             var target= game.Enemy.Center.MoveTowards(game.Me.Center, diff);
             if (target.X >= game.Width || target.X < 0) diff *= -1;
             target = game.Enemy.Center.MoveTowards(game.Me.Center, diff);
