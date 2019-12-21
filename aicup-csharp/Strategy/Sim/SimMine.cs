@@ -7,6 +7,7 @@ namespace aicup2019.Strategy.Sim
         public Mine Mine;
         public MyPosition Position, _position;
         public double Timer, _timer;
+        public bool IsDead;
         public SimMine(Mine mine)
         {
             Mine = mine;
@@ -19,10 +20,13 @@ namespace aicup2019.Strategy.Sim
         {
             Timer = _timer;
             Position.UpdateFrom(_position);
+            IsDead = false;
         }
 
         public void Explode(SimGame game)
         {
+            if (IsDead) return;
+            IsDead = true;
             foreach (var unit in game.Units)
             {
                 if (Math.Abs(Position.X - unit.Position.X) > Mine.ExplosionParameters.Radius + unit.HalfWidth

@@ -10,18 +10,21 @@ namespace aicup2019.Strategy.Sim
         public Player Player;
         public List<SimUnit> Units = new List<SimUnit>(2);
         public int Score, Id, _score;
+        public SimPlayer EnemyPlayer;
         public SimPlayer(Player player, Game game)
         {
             Player = player;
             Id = player.Id;
             Score = _score = player.Score;
-            Units.AddRange(game.Units.Where(u => u.PlayerId == Id).Select(u => new SimUnit(u)));
+            Units.AddRange(game.Units.Where(u => u.PlayerId == Id).Select(u => new SimUnit(u) { Player = this }));
             if (Units.Count == 2)
             {
                 Units[0].Allied = Units[1];
                 Units[1].Allied = Units[0];
             }
         }
+
+        public int ScoreDiff => Score - EnemyPlayer.Score;
 
         public void Reset()
         {

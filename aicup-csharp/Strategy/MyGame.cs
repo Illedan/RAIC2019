@@ -1,42 +1,35 @@
 ﻿using System.Collections.Generic;
 using AiCup2019.Model;
 using System.Linq;
-using System.Diagnostics;
 using static AiCup2019.Model.Item;
-using aicup2019.Strategy.Services;
 
 namespace aicup2019.Strategy
 {
+    //Contains stats about the game not needed in a sim.
     public class MyGame
     {
-        // Find all potential positions of the enemy. Make a circle of all places he can be. Shoot if I can limit it.
-        public Stopwatch s;
-        public List<MyBullet> Bullets = new List<MyBullet>();
-        public List<MyUnit> Units = new List<MyUnit>();
         public int Width, Height;
         public Player MePlayer, EnemyPlayer;
-        public MyUnit Me, Enemy;
+
+        public List<MyPosition> AllWalls = new List<MyPosition>();
+
+
         public MyGame(Game game, Unit me)
         {
-            s = Stopwatch.StartNew();
             Game = game;
             Width = Game.Level.Tiles.Length;
             Height = Game.Level.Tiles[0].Length;
-            Units.AddRange(game.Units.Select(u => new MyUnit(u)));
-            Bullets.AddRange(game.Bullets.Select(b => new MyBullet(b)));
             MePlayer = game.Players.First(p => p.Id == me.PlayerId);
             EnemyPlayer = game.Players.First(p => p.Id != me.PlayerId);
-            Me = Units.First(u => u.Unit.Id == me.Id);
+            for(var x = 0; x < Width; x++)
+            {
+                for(var y = 0; y < Height; y++)
+                {
+                    if (Game.Level.Tiles[x][y] == Tile.Wall) AllWalls.Add(new MyPosition(x, y));
+                }
+            }
         }
 
-        public void Init()
-        {
-            Enemy = Units.OrderBy(u => DistService.GetDist(u.Center, Me.Center)).First(u => u.Unit.PlayerId != Me.Unit.PlayerId);
-        }
-
-        public int XDiff => Me.Center.X < Enemy.Center.X ? 1 : -1;
-        public double TargetDist => DistService.GetDist(Me.Center, Enemy.Center);
-        public int ScoreDiff => MePlayer.Score - EnemyPlayer.Score;
         public bool HasHealing => HealthPacks.Any();
 
         public IEnumerable<MyPosition> HealthPacks => Game.LootBoxes.Where(l => l.Item is HealthPack).Select(h => new MyPosition(h.Position));

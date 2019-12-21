@@ -12,67 +12,69 @@ using System.Diagnostics;
 public class MyStrategy
 {
     public static AiCup2019.Debug Debug;
-
+    public static int m_lastTick = -10;
+    private static SimGame m_lastGame;
     public UnitAction GetAction(Unit unit, Game game, AiCup2019.Debug debug)
     {
-        Const.Reset(game.Properties);
+        if(m_lastTick >= game.CurrentTick-1) // Verify this number
+        {
+            //TODO: Check number of bullets
+            LogService.WriteLine("Cached choice");
+            return CreateAction(m_lastGame.Units.First(u => u.unit.Id == unit.Id), m_lastGame);
+        }
 
+        Const.Reset(game.Properties);
         Debug = debug;
         var myGame = new MyGame(game, unit);
-        var me = myGame.Me;
-        var sim = new SimGame(myGame);
+        var sim = m_lastGame = new SimGame(myGame, unit);
+        m_lastTick = game.CurrentTick;
         DistService.CalcDists(sim);
-        myGame.Init();
         foreach (var b in sim.Bullets) b.CalcCollisionTime(sim);
-        var aim = AimService.GetAimTarget(myGame);
-        var shoot = ShootService.ShouldShoot(myGame, aim);
-        var walkTarget = WalkService.FindWalkTarget(myGame);
-        var jump = JumpService.GetDir(myGame, walkTarget.Clone);
 
+        //TODO: Add collision with healing if life is below 70%?
+        //TODO: Collision med life om fiende har bazooka? Eller det er miner i omegn?
+        //TODO: Jump eget tree også? Blir kanskje litt far fetched..
+        //TODO: Make independent tree for shooting? Blir ikke så påvirket av mine moves
+        //TODO: Hva skal shooting skyte på? Nærmeste posisjoner fiende kan være på?
+        //TODO: Første omgang er det nok å simme at fiende kan skyte 1 kule av Rocket. Slik at eg minimerer skade
+        //TODO: Så ser vi hvor mye Spread faktisk har å si.
+        //TODO: Ser da om fiende kan treffe meg med 1 kule.
+        //TODO: Husk å redusere skade?
+        //TODO: Verify jump pad sim.
 
-        var mySimUnit = sim.Units.First(u => u.unit.Id == me.Unit.Id);
-        var selectedAction = MyAction.DoNothing;
-        Const.Depth = 10; //sim.Bullets.Any(b => b.bullet.UnitId != mySimUnit.unit.Id) || me.Center.Dist(walkTarget) > 3 ? 10 : 3;
-        Const.DepthPerMove = 3;
-        var sol =  MonteCarlo.FindBest(sim, mySimUnit, walkTarget.Clone);
-        selectedAction = sol[0];
-        SimService.Simulate(sim, sol, mySimUnit, true);
-        sim.Reset();
+        foreach(var u in sim.Units)
+        {
+            //TODO: All these needs to knpw what the enemy wants too?
+            //u.AimTarget = AimService.GetAimTarget(myGame);
+            //u.Shoot = ShootService.ShouldShoot(myGame, u.AimTarget);
+            u.WalkTarget = WalkService.FindWalkTarget(myGame);
+            u.AimTarget = AimService.GetAimTarget(myGame, u);
+            u.Shoot = ShootService.ShouldShoot(myGame, u.AimTarget);
+        }
+
         if(game.CurrentTick % 600 == 0)
             Console.Error.WriteLine("Time: " + Const.GetTime + " Evals: " + Const.Evals + " Sims: " + Const.Sims);
 
-        // debug.Draw(new Line(aim.CreateFloatVec, me.Center.CreateFloatVec, 0.05f, new ColorFloat(1, 0, 0, 1)));
-        //debug.Draw(new Line(walkTarget.CreateFloatVec, me.Center.CreateFloatVec, 0.1f, new ColorFloat(0, 0.5f, 0, 1)));
-        //  Debug.Draw(new Log("Spread: " + (unit.Weapon.HasValue?unit.Weapon.Value.Spread:0) + " MAG: " + (unit.Weapon.HasValue ? unit.Weapon.Value.Magazine : 0) + " Reload: " + reload));
+        return CreateAction(m_lastGame.Units.First(u => u.unit.Id == unit.Id), m_lastGame);
+    }
+
+    private static UnitAction CreateAction(SimUnit unit, SimGame game)
+    {
+        var selectedAction = unit.GetBestNode();
+        var aim = unit.AimTarget;
+        var pos = unit.Position;
+        var shoot = unit.Shoot;
+        var enemies = unit.Enemies.OrderBy(e => e.Position.Dist(pos) + e.Health * 0.01).ToList();
+        var targetPos = enemies.First().Position;
         UnitAction action = new UnitAction();
-        //action.Velocity =me.Center.X < walkTarget.X ? game.Properties.UnitMaxHorizontalSpeed : -game.Properties.UnitMaxHorizontalSpeed;
-        //action.Jump = jump > 0;
-        //action.JumpDown = jump < 0;
-        action.Velocity = selectedAction.Dx * game.Properties.UnitMaxHorizontalSpeed;
+        action.Velocity = selectedAction.Dx * Const.Properties.UnitMaxHorizontalSpeed;
         action.Jump = selectedAction.JumpUp;
         action.JumpDown = selectedAction.JumpDown;
-        action.Aim = new Vec2Double(aim.X - me.Center.X, aim.Y - me.Center.Y);
+        action.Aim = new Vec2Double(aim.X -pos.X, aim.Y - pos.Y);
         action.Shoot = shoot;
-        action.Reload = me.Center.Dist(myGame.Enemy.Center) > 5 && me.HasWeapon && me.Weapon.Magazine < me.Weapon.Parameters.MagazineSize*0.3;
-        action.SwapWeapon = SwapService.ShouldSwap(myGame);
+        action.Reload = !shoot && pos.Dist(targetPos) > 5 && unit.HasWeapon && me.Weapon.Magazine < me.Weapon.Parameters.MagazineSize * 0.3;
+        action.SwapWeapon = SwapService.ShouldSwap(game);
         action.PlantMine = myGame.Me.Center.Dist(myGame.Enemy.Center) < 3;
-
-        LogService.WriteLine("DIR: " + action.Velocity);
-        var spread = AimService.GetSpread(myGame, aim);
-        foreach(var point in spread)
-        {
-           debug.Draw(new Line(point.CreateFloatVec, me.Center.CreateFloatVec, 0.05f, new ColorFloat(0.1f, 0.1f, 0.4f, 1)));
-        }
-
-        foreach (var bullet in sim.Bullets)
-        {
-            var start = bullet.bullet.Position;
-            var end = bullet.EndPosition;
-            var sFloat = new Vec2Float((float)start.X, (float)start.Y);
-            var eFloat = new Vec2Float((float)end.X, (float)end.Y);
-            debug.Draw(new Line(sFloat, eFloat, 0.1f, new ColorFloat(0, 0, 0, 1)));
-        }
-
         return action;
     }
 }

@@ -31,12 +31,16 @@ namespace aicup2019.Strategy.Sim
             foreach (var player in Players)
             {
                 Units.AddRange(player.Units);
+                foreach (var u in player.Units)
+                    u.Enemies = Players.First(p => p != player).Units;
             }
 
-            foreach(var b in game.Bullets)
+            foreach(var b in game.Game.Bullets)
             {
-                Bullets.Add(new SimBullet(b.Bullet));
+                Bullets.Add(new SimBullet(b));
             }
+            Players[0].EnemyPlayer = Players[1];
+            Players[1].EnemyPlayer = Players[0];
         }
 
         public Tile GetTileD(double x, double y) => GetTile((int)x, (int)y);
@@ -56,7 +60,8 @@ namespace aicup2019.Strategy.Sim
             }
 
             foreach (var b in Bullets) b.Reset();
-            foreach (var u in Units) u.Reset();
+            Players[0].Reset();
+            Players[1].Reset();
             BulletFactory.Reset();  
         }
     }

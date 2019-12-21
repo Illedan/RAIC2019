@@ -1,20 +1,21 @@
 ﻿using System;
 using System.Linq;
 using AiCup2019.Model;
+using aicup2019.Strategy.Sim;
 namespace aicup2019.Strategy.Services
 {
     public static class SwapService
     {
-        public static bool ShouldSwap(MyGame game)
+        public static bool ShouldSwap(SimGame game, SimUnit unit)
         {
-            if (!game.Me.HasWeapon ) return true;
-            if (game.Me.Weapon.Typ == WeaponType.RocketLauncher) return false;
-            var weaponBoxes = game.Weapons;
-            var closest = weaponBoxes.OrderBy(w => new MyPosition(w.Position).Dist(game.Me.Center)).Cast<LootBox?>().FirstOrDefault();
+            if (!unit.HasWeapon) return true;
+            if (unit.WeaponType == WeaponType.RocketLauncher) return false;
+            var weaponBoxes = game.game.Weapons;
+            var closest = weaponBoxes.OrderBy(w => new MyPosition(w.Position).Dist(unit.Position)).Cast<LootBox?>().FirstOrDefault();
             if (closest == null) return false;
             var weapon = closest.Value.Item as Item.Weapon;
             var rect = Rect.FromMovingBullet(closest.Value.Position, closest.Value.Size.X);
-            if (rect.Overlapping(game.Me.Size) && game.Me.Weapon.Typ != weapon.WeaponType)
+            if (rect.Overlapping(unit.Rect) && unit.WeaponType != weapon.WeaponType)
             {
                 if (weapon.WeaponType == WeaponType.RocketLauncher) return true;
                 if (weapon.WeaponType == WeaponType.AssaultRifle) return true;

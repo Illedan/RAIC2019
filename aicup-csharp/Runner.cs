@@ -56,6 +56,7 @@ namespace AiCup2019
             {
                 try
                 {
+                    MyStrategy.m_lastTick = -100;
                     DistService.m_isRun = false;
                     string host = args.Length < 1 ? "127.0.0.1" : args[0];
                     int port = args.Length < 2 ? 31001 : int.Parse(args[1]);

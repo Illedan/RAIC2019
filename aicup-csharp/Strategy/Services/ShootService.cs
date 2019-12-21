@@ -76,7 +76,7 @@ namespace aicup2019.Strategy.Services
         public static bool ShouldShoot(MyGame game, MyPosition aimPos)
         {
             var me = game.Me;
-            if (!me.HasWeapon) return false;
+            if (!me.HasWeapon || me.Weapon.FireTimer > 0) return false;
             LogService.WriteLine("FireTimer: " + me.Unit.Weapon.Value.FireTimer);
             //if (me.Unit.Weapon.Value.Spread > me.Unit.Weapon.Value.Parameters.MinSpread + 0.1 && me.Center.Dist(aimPos) > 5) return false;
             if (!CanShoot(me.Center, aimPos, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;

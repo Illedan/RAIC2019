@@ -18,12 +18,19 @@ namespace aicup2019.Strategy.Sim
         public int Health, _health;
         public WeaponType WeaponType;
         public double HalfWidth, HalffHeight, JumpTime, _jumpTime, Speed, Score,
-            FireTimer, _fireTimer, MaxFireTimer, Spread, _spread, MaxSpread, MinSpread, SpreadChange, Recoil;
+            FireTimer, _fireTimer, MaxFireTimer, Spread, _spread, MaxSpread, MinSpread, SpreadChange, Recoil, AimAngle, _aimAngle;
         public bool IsDead, CanJump, CanCancel;
         public int TeamId, Id;
+        public Rect Rect => Rect.FromUnit(unit);
+
+        public MyPosition WalkTarget, AimTarget;
+        public bool Shoot;
 
         public SimUnit Allied;
+        public List<SimUnit> Enemies;
         public bool HasWeapon;
+
+        public SimPlayer Player;
 
         public SimUnit(Unit unit)
         {
@@ -48,6 +55,7 @@ namespace aicup2019.Strategy.Sim
             MinSpread = unit.Weapon.HasValue ? unit.Weapon.Value.Parameters.MinSpread : 0;
             SpreadChange = unit.Weapon.HasValue ? unit.Weapon.Value.Parameters.AimSpeed : 0;
             Recoil = unit.Weapon.HasValue ? unit.Weapon.Value.Parameters.Recoil : 0;
+            AimAngle = _aimAngle = unit.Weapon.HasValue ? unit.Weapon.Value.LastAngle ?? 0.0 : 0.0;
         }
 
         public void AfterRound()
@@ -83,6 +91,7 @@ namespace aicup2019.Strategy.Sim
             CanCancel = unit.JumpState.CanCancel;
             Score = 0.0;
             FireTimer = _fireTimer;
+            AimAngle = _aimAngle;
         }
 
         private SearchNode GetRnd() => Nodes[Const.rnd.Next(Nodes.Count)];
@@ -110,23 +119,20 @@ namespace aicup2019.Strategy.Sim
         public void Fire(MyPosition target, SimGame game)
         {
             if (!HasWeapon) return;
-            // Check if we can shoot - cache these.
-            // Find the new spread after the move of aim.
-            // Find all reachable tiles, so we don't have to search for 
+
             var newAngle = Math.Atan2(target.Y - Position.Y, target.X - Position.X);
-            var diff = Math.Abs(Spread - newAngle);
-            if(diff > Math.PI)
+            var diff = Math.Abs(AimAngle - newAngle);
+            if (diff > Math.PI)
             {
-                var newDiff = Math.Abs(Spread - (newAngle - Math.PI * 2));
+                var newDiff = Math.Abs(AimAngle - (newAngle - Math.PI * 2));
                 if (newDiff < diff) diff = newDiff;
             }
-
+            AimAngle = newAngle;
             Spread = Math.Max(MinSpread, Math.Min(MaxSpread, Spread + diff));
 
-            var bullets = BulletFactory.GetBullets(WeaponType, Position, newAngle, Id, Spread);
+            var bullets = BulletFactory.GetBullets(WeaponType, Position, newAngle, Id, AimAngle);
             game.Bullets.AddRange(bullets);
             Spread += Recoil;
-
         }
 
         private bool m_jumpUp;
@@ -137,7 +143,9 @@ namespace aicup2019.Strategy.Sim
             if (canChange) m_jumpUp = action.JumpUp;
             var dy = -JumpSpeed;
             if (game.GetTileD(Position.X + HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad
-                || game.GetTileD(Position.X - HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad)
+                || game.GetTileD(Position.X - HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad
+                || game.GetTileD(Position.X + HalfWidth, Position.Y + HalffHeight) == Tile.JumpPad
+                || game.GetTileD(Position.X - HalfWidth, Position.Y + HalffHeight) == Tile.JumpPad)
             {
                 JumpTime = Const.Properties.JumpPadJumpTime;
                 Speed = Const.Properties.JumpPadJumpSpeed;

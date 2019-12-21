@@ -66,10 +66,10 @@ namespace aicup2019.Strategy.Services
                     else
                     {
                         var possible = ".";
-                        foreach(var unit in game.game.Units)
+                        foreach(var unit in game.Units)
                         {
-                            var X = (int)unit.Bottom.X;
-                            var Y = (int)unit.Bottom.Y;
+                            var X = (int)unit.Position.X;
+                            var Y = (int)(unit.Position.Y-unit.HalffHeight);
                             if (X == j && Y == i) possible = "P";
                         }
 

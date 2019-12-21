@@ -25,6 +25,7 @@ namespace aicup2019.Strategy.Sim
             int unitId, 
             double spread)
         {
+            //Is it slow to get bullets? Verify with Windows.
             var weapNum = m_weapMap[weapon];
             var bullets = Bullets[weapNum][Counters[weapNum]++];
             if (Amount == 1)

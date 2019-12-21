@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using aicup2019.Strategy.Sim;
 namespace aicup2019.Strategy.Services
 {
@@ -18,7 +17,7 @@ namespace aicup2019.Strategy.Services
         {
             var steps = Const.Steps * Const.DepthPerMove;
             var hp = target.Health;
-            double d = 0.0; //target.HasWeapon ? DistService.GetDist(target.Position, Target) : target.Position.XDist(Target)*10;
+            double d = 0.0;
             var score = 0;
             for (var i = 0; i < moves.Length; i++)
             {
@@ -55,7 +54,7 @@ namespace aicup2019.Strategy.Services
                         }
 
                     }
-                d +=  DistService.GetDist(target.Position, Target) + (target.Position.XDist(Target)*1);
+                d +=  DistService.GetDist(target.Position, Target) + (target.Position.XDist(Target)*5);
 
                 if (Draw)
                 {

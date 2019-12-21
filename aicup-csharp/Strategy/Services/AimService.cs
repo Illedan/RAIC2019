@@ -1,57 +1,57 @@
 ﻿using System;
+using aicup2019.Strategy.Sim;
+using System.Linq;
+
 namespace aicup2019.Strategy.Services
 {
     public static class AimService
     {
-        public static MyPosition GetAimTarget(MyGame game)
+        public static MyPosition GetAimTarget(MyGame game, SimUnit unit)
         {
-            // Om eg ikke kan sikt rett på. Sikt på nærmeste punkt eg kan skyt han fra?
-            // Med mindre eg er på vei mot han? For da kan eg 
-            if (!game.Me.HasWeapon) return game.Enemy.Center;
-            var dist = game.Me.Center.Dist(game.Enemy.Center);
-            var requested = game.Me.Weapon.Typ == AiCup2019.Model.WeaponType.RocketLauncher ? GetClosestGround(game) : game.Enemy.Center;
-            if (dist < 3 || Math.Abs(game.Enemy.Center.Y-game.Me.Center.Y) < 0.1) requested = game.Enemy.Center;
-            //requested = game.Enemy.GetEndPos(game);
-            var angle = Math.Atan2(requested.Y - game.Me.Center.Y, requested.X - game.Me.Center.X);
-            var prevAngle = game.Me.Unit.Weapon.Value.LastAngle.HasValue ? game.Me.Unit.Weapon.Value.LastAngle.Value : angle;
-            if (Math.Abs(angle - prevAngle) < 0.1 || game.Me.Weapon.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.2) angle = prevAngle;
-           //else if(!ShootService.CanShoot(game.Me.Center,game.Enemy.Center, game, game.Me.Weapon.Parameters.Bullet.Speed))
-           //{
-           //    angle = prevAngle;
-           //}
+            var pos = unit.Position;
+            var enemies = unit.Enemies.OrderBy(e => e.Position.Dist(pos) + e.Health*0.01).ToList();
+            var targetPos = enemies.First().Position;
+            if (!unit.HasWeapon) return targetPos;
+            var dist = pos.Dist(targetPos);
+            var requested = unit.WeaponType == AiCup2019.Model.WeaponType.RocketLauncher ? GetClosestGround(game, targetPos) : targetPos;
+            if (dist < 3 || Math.Abs(targetPos.Y-pos.Y) < 0.1) requested = targetPos;
+
+            var angle = Math.Atan2(requested.Y - pos.Y, requested.X - pos.X);
+            var prevAngle = unit.AimAngle;
+            if (Math.Abs(angle - prevAngle) < 0.05 || unit.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.1) angle = prevAngle;
             var dx = Math.Cos(angle)*dist;
             var dy = Math.Sin(angle)*dist;
-            return new MyPosition(game.Me.Center.X + dx, game.Me.Center.Y + dy);
+            return new MyPosition(pos.X + dx, pos.Y + dy);
         }
 
-        public static MyPosition GetClosestGround(MyGame game) 
+        public static MyPosition GetClosestGround(MyGame game, MyPosition targetPos) 
         {
-            var heights = game.GetHeights();
-            var enemy = game.Enemy.Center;
+            //Nærmeste eg kan skyte?
+            var walls = game.AllWalls;
+            var enemy = targetPos;
             var d = 100000.0;
-            var best = game.Enemy.Center;
-            for(var i = 0; i < heights.Length; i++)
+            var best = targetPos;
+            foreach(var wall in walls)
             {
-                var p = new MyPosition(i, heights[i]);
-                var dd = Math.Abs(p.Y - enemy.Y) + Math.Abs(p.X - enemy.X)*5;
+                var dd = Math.Abs(wall.Y - enemy.Y) + Math.Abs(wall.X - enemy.X)*2;
+                if (wall.Y > enemy.Y) dd += 3;
                 if (dd < d)
                 {
-                    best = p;
+                    best = wall;
                     d = dd;
                 }
             }
             return best;
         }
 
-        public static MyPosition[] GetSpread(MyGame game, MyPosition aim)
+        public static MyPosition[] GetSpread(MyPosition aim, SimUnit unit)
         {
-            if (!game.Me.HasWeapon) return new MyPosition[0];
-            var me = game.Me;
-            var dist = aim.Dist(me.Center);
-            var angle = Math.Atan2(aim.Y - me.Center.Y, aim.X - me.Center.X);
-            var max = angle + game.Me.Weapon.Spread;
-            var min = angle - game.Me.Weapon.Spread;
-            return new MyPosition[] { me.Center.MoveTowards(max, 20), me.Center.MoveTowards(min, 20) };
+            var pos = unit.Position;
+            if (!unit.HasWeapon) return new MyPosition[0];
+            var angle = Math.Atan2(aim.Y - pos.Y, aim.X - pos.X);
+            var max = angle + unit.Spread;
+            var min = angle - unit.Spread;
+            return new MyPosition[] { pos.MoveTowards(max, 20), pos.MoveTowards(min, 20) };
         }
     }
 }

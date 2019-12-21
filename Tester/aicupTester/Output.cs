@@ -192,7 +192,7 @@ namespace aicup2019.Strategy
         }
 
         private static bool m_isDone;
-        public static long m_timeout = 8;
+        public static long m_timeout = 5;
         private static int m_count;
 
         public static bool IsDone()
@@ -387,12 +387,12 @@ public class MyStrategy
         var shoot = ShootService.ShouldShoot(myGame, aim);
         var walkTarget = WalkService.FindWalkTarget(myGame);
         var jump = JumpService.GetDir(myGame, walkTarget.Clone);
-
+        DistService.DrawPath(me.Center, walkTarget);
 
         var mySimUnit = sim.Units.First(u => u.unit.Id == me.Unit.Id);
         var selectedAction = MyAction.DoNothing;
         Const.Depth = 10; //sim.Bullets.Any(b => b.bullet.UnitId != mySimUnit.unit.Id) || me.Center.Dist(walkTarget) > 3 ? 10 : 3;
-        Const.DepthPerMove = 3;
+        Const.DepthPerMove = 10;
         var sol = MonteCarlo.FindBest(sim, mySimUnit, walkTarget.Clone);
         selectedAction = sol[0];
         SimService.Simulate(sim, sol, mySimUnit, true);
@@ -504,7 +504,9 @@ namespace aicup2019.Strategy.Sim
             if (canChange) m_jumpUp = action.JumpUp;
             var dy = -JumpSpeed;
             if (game.GetTileD(Position.X + HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad
-                || game.GetTileD(Position.X - HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad)
+                || game.GetTileD(Position.X - HalfWidth, Position.Y - HalffHeight) == Tile.JumpPad
+                || game.GetTileD(Position.X + HalfWidth, Position.Y + HalffHeight) == Tile.JumpPad
+                || game.GetTileD(Position.X - HalfWidth, Position.Y + HalffHeight) == Tile.JumpPad)
             {
                 JumpTime = Const.Properties.JumpPadJumpTime;
                 Speed = Const.Properties.JumpPadJumpSpeed;
@@ -832,7 +834,7 @@ namespace aicup2019.Strategy.Services
             while ((int)p1.X != (int)p2.X || (int)p1.Y != (int)p2.Y)
             {
                 k++;
-                if (k > 30) return;
+                if (k > 100) return;
                 var best = p1;
                 var bestDist = 100000000.0;
                 for (var i = 0; i < 4; i++)
@@ -840,7 +842,7 @@ namespace aicup2019.Strategy.Services
                     var xx = (int)p1.X + dxes[i];
                     var yy = (int)p1.Y + dyes[i];
                     if (!Game.OnBoard(xx, yy) || Game.GetTile(xx, yy) == AiCup2019.Model.Tile.Wall) continue;
-                    LogService.DrawLineBetweenCenter(p1, new MyPosition(xx, yy), 0, 0, 1);
+                    //LogService.DrawLineBetweenCenter(p1, new MyPosition(xx, yy), 0, 0, 1);
                     var newPos = new MyPosition(xx, yy);
                     var dist = GetDist(p2, newPos);
                     if (dist < bestDist)
@@ -849,7 +851,7 @@ namespace aicup2019.Strategy.Services
                         bestDist = dist;
                     }
                 }
-                //LogService.DrawLineBetweenCenter(p1, best, 0, 0, 1);
+                LogService.DrawLineBetweenCenter(p1, best, 0, 0, 1);
                 p1 = best;
             }
         }
@@ -1227,7 +1229,7 @@ namespace aicup2019.Strategy.Services
             foreach (var act in MyAction.Actions)
             {
                 Repeat(Temp, act);
-                Score(game, unit, targetPos, false);
+                Score(game, unit, targetPos, true);
             }
 
             // if (!game.Bullets.Any()) return Best;

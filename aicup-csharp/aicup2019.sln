@@ -9,6 +9,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		..\Output.cs = ..\Output.cs
 		..\.gitignore = ..\.gitignore
+		..\aicup2019-macos\levels\level.txt = ..\aicup2019-macos\levels\level.txt
+		..\aicup2019-macos\levels\level2.txt = ..\aicup2019-macos\levels\level2.txt
+		..\aicup2019-macos\levels\level3.txt = ..\aicup2019-macos\levels\level3.txt
+		Todos.txt = Todos.txt
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aicupTester", "..\Tester\aicupTester\aicupTester.csproj", "{45C694A4-E32D-4F5D-A212-9E00DA56428E}"

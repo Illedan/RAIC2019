@@ -15,14 +15,6 @@ namespace aicup2019.Strategy.Services
         public static MyAction[] FindBest(SimGame game, SimUnit unit, MyPosition targetPos)
         {
             if (game.Bullets.Any()) m_lastBullet = game.game.Game.CurrentTick;
-            if (unit.HasWeapon && 
-                game.game.Game.CurrentTick- m_lastBullet > 600
-                 && game.game.ScoreDiff > 0
-                 && game.game.TargetDist > 5)
-            {
-               //Console.Error.WriteLine("Do nothing");
-                return new MyAction[] { MyAction.DoNothing };
-            }
             var depth = Const.Depth;
             Best = new MyAction[depth];
             Temp = new MyAction[depth];

@@ -1,0 +1,32 @@
+﻿
+
+// Find all tiles that are reachable from. Only those are valid to check
+// Distservice should ignore gaps of 1 . Only usable for shooting through.. 
+// Can fire from place to place
+// Dist service som har høyde og lengde man har vært i lufta.
+// Dist i dist service er bassert på tid fra hopp. Mindre dist om man kan være i lufta? Nei fordi langs bakken gir mye ekstra score.
+//TODO: Add collision with healing if life is below 70% at the start?
+Maybe add 
+//TODO: Collision med life om fiende har bazooka? Eller det er miner i omegn?
+//TODO: Jump eget tree også? Blir kanskje litt far fetched..
+//TODO: Make independent tree for shooting? Blir ikke så påvirket av mine moves
+//TODO: Hva skal shooting skyte på? Nærmeste posisjoner fiende kan være på?
+//TODO: Første omgang er det nok å simme at fiende kan skyte 1 kule av Rocket. Slik at eg minimerer skade
+//TODO: Så ser vi hvor mye Spread faktisk har å si.
+//TODO: Ser da om fiende kan treffe meg med 1 kule.
+//TODO: Husk å redusere skade?
+//TODO: Verify jump pad sim.
+
+foreach(var u in sim.Units)
+{
+    //TODO: All these needs to knpw what the enemy wants too?
+    //u.AimTarget = AimService.GetAimTarget(myGame);
+    //u.Shoot = ShootService.ShouldShoot(myGame, u.AimTarget);
+
+
+
+                // Check if we can shoot - cache these.
+            // Find the new spread after the move of aim.
+            // Find all reachable tiles, so we don't have to search for 
+
+        // Find all potential positions of the enemy. Make a circle of all places he can be. Shoot if I can limit it.
