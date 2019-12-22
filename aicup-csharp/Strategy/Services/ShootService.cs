@@ -2,10 +2,43 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using aicup2019.Strategy.Sim;
 namespace aicup2019.Strategy.Services
 {
     public static class ShootService
     {
+        public static bool[,] canShootMap;
+        public static bool m_isRun;
+
+        public static void Initialize(SimGame game)
+        {
+            if (m_isRun) return;
+            m_isRun = true;
+            var max = Const.Width * Const.Height;
+            canShootMap = new bool[max, max];
+
+        }
+
+
+        public static bool ShouldShoot(SimGame game, SimUnit unit)
+        {
+            if (!unit.HasWeapon || unit.FireTimer > 0) return false;
+            LogService.WriteLine("FireTimer: " + unit.FireTimer);
+            //if (me.Unit.Weapon.Value.Spread > me.Unit.Weapon.Value.Parameters.MinSpread + 0.1 && me.Center.Dist(aimPos) > 5) return false;
+            if (!CanShoot(unit.Position, unit.AimTarget, game, unit, unit.Weapon.Parameters.Bullet.Speed)) return false;
+            return true;
+        }
+
+        public static bool CanShootAt(MyPosition pos, MyPosition target)
+        {
+            var y =(int)target.Y;
+            var y2 = (int)(target.Y + Const.HalfUnitHeight);
+            if (y == y2) return canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y)];
+
+            return canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y)] ||
+                canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y2)];
+        }
+
         public static double GetShootTime(double dist, double speed)
         {
             return dist / speed;
@@ -17,28 +50,28 @@ namespace aicup2019.Strategy.Services
             return GetShootTime(dist, bulletSpeed);
         }
 
-        public static bool CanShoot(MyPosition startPos, MyPosition endPos, MyGame game, MyUnit firering, double bulletSpeed)
+        public static bool CanShoot(MyPosition startPos, MyPosition endPos, SimGame game, SimUnit unit, double bulletSpeed)
         {
-            var hitPos = GetHitPos(startPos, endPos, game, bulletSpeed, firering);
-            if(game.Me.Weapon.Typ == WeaponType.RocketLauncher)
+            var hitPos = GetHitPos(startPos, endPos, game, bulletSpeed, unit);
+            if(unit.WeaponType == WeaponType.RocketLauncher)
             {
-                var spread = AimService.GetSpread(game, endPos);
-                var posses = spread.Select(s => GetHitPos(startPos, s, game, bulletSpeed, firering)).ToArray();
+                var spread = AimService.GetSpread(unit);
+                var posses = spread.Select(s => GetHitPos(startPos, s, game, bulletSpeed, unit)).ToArray();
                 foreach(var p in posses)
                 {
-                    LogService.DrawLine(p, game.Me.Center, 0, 0, 1);
+                    LogService.DrawLine(p, unit.Position, 0, 0, 1);
                 }
 
-                if (posses.Any(p => p.Dist(game.Enemy.Center) > p.Dist(game.Me.Center) && p.Dist(endPos) > game.Me.Weapon.Parameters.Explosion.Value.Radius-1))
+                if (posses.Any(p => p.Dist(unit.TargetEnemy.Position) > p.Dist(unit.Position) && p.Dist(endPos) > unit.Weapon.Parameters.Explosion.Value.Radius-1))
                     return false;
 
-                if (game.Enemy.Center.Dist(endPos) - game.Me.Weapon.Parameters.Explosion.Value.Radius > game.Me.Center.Dist(endPos)) return false;
+                if (unit.TargetEnemy.Position.Dist(endPos) - unit.Weapon.Parameters.Explosion.Value.Radius > unit.Position.Dist(endPos)) return false;
             }
 
             return hitPos.Dist(endPos) < 1;
         }
 
-        public static MyPosition GetHitPos(MyPosition startPos, MyPosition endPos, MyGame game, double bulletSpeed, MyUnit firering, bool stopOnEnd = true)
+        public static MyPosition GetHitPos(MyPosition startPos, MyPosition endPos, SimGame game, double bulletSpeed, SimUnit firering, bool stopOnEnd = true)
         {
             var dist = endPos.Dist(startPos);
             var time = GetShootTime(dist, bulletSpeed) * Const.Properties.TicksPerSecond * 100;
@@ -51,20 +84,20 @@ namespace aicup2019.Strategy.Services
             {
                 x += dx;
                 y += dy;
-                if (!game.OnBoard(x, y)) return new MyPosition(x, y);
-                var tile = game.GetTile(x, y);
+                if (!game.game.OnBoard(x, y)) return new MyPosition(x, y);
+                var tile = game.GetTileD(x, y);
                 if (tile == Tile.Wall) return new MyPosition(x, y);
-                tile = game.GetTile(x-game.Me.Weapon.Parameters.Bullet.Size*0.5, y - game.Me.Weapon.Parameters.Bullet.Size * 0.5);
+                tile = game.GetTileD(x- firering.Weapon.Parameters.Bullet.Size*0.5, y - firering.Weapon.Parameters.Bullet.Size * 0.5);
                 if (tile == Tile.Wall) return new MyPosition(x, y);
-                tile = game.GetTile(x + game.Me.Weapon.Parameters.Bullet.Size * 0.5, y - game.Me.Weapon.Parameters.Bullet.Size * 0.5);
+                tile = game.GetTileD(x + firering.Weapon.Parameters.Bullet.Size * 0.5, y - firering.Weapon.Parameters.Bullet.Size * 0.5);
                 if (tile == Tile.Wall) return new MyPosition(x, y);
                 var nextD = Math.Sqrt(MyPosition.Pow(x - endPos.X) + MyPosition.Pow(y - endPos.Y));
                 if (nextD > d && stopOnEnd || nextD < 0.3) return endPos;
                 d = nextD;
                 foreach(var u in game.Units)
                 {
-                    if (u == firering || u.Unit.PlayerId != firering.Unit.PlayerId) continue;
-                    var unit = u.Unit;
+                    if (u == firering || u.unit.PlayerId != firering.unit.PlayerId) continue;
+                    var unit = u.unit;
                     if (!(Math.Abs(x - unit.Position.X) > firering.Weapon.Parameters.Bullet.Size/2 + unit.Size.X/2
                             || Math.Abs(y - unit.Position.Y) > firering.Weapon.Parameters.Bullet.Size / 2 + unit.Size.Y / 2)) return new MyPosition(x, y);
                 }
@@ -73,29 +106,5 @@ namespace aicup2019.Strategy.Services
             return endPos;
         }
 
-        public static bool ShouldShoot(MyGame game, MyPosition aimPos)
-        {
-            var me = game.Me;
-            if (!me.HasWeapon || me.Weapon.FireTimer > 0) return false;
-            LogService.WriteLine("FireTimer: " + me.Unit.Weapon.Value.FireTimer);
-            //if (me.Unit.Weapon.Value.Spread > me.Unit.Weapon.Value.Parameters.MinSpread + 0.1 && me.Center.Dist(aimPos) > 5) return false;
-            if (!CanShoot(me.Center, aimPos, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
-            return true;
-        }
-
-        public static bool CanPotentiallyShoot(MyUnit me, MyUnit enemy, MyGame game)
-        {
-            if (!me.HasWeapon) return false;
-
-           if(me.Unit.Weapon.Value.Typ == WeaponType.RocketLauncher)
-           {
-               if (!CanShoot(me.Center, enemy.Bottom, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
-               return true;
-           }
-
-            if (!CanShoot(me.Center, enemy.Center, game, me,me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
-           // if (!CanShoot(me.Center, enemy.Top, game, me, me.Unit.Weapon.Value.Parameters.Bullet.Speed)) return false;
-            return true;
-        }
     }
 }

@@ -58,11 +58,13 @@ namespace AiCup2019
                 {
                     MyStrategy.m_lastTick = -100;
                     DistService.m_isRun = false;
+                    ShootService.m_isRun = false;
                     string host = args.Length < 1 ? "127.0.0.1" : args[0];
                     int port = args.Length < 2 ? 31001 : int.Parse(args[1]);
                     string token = args.Length < 3 ? "0000000000000000" : args[2];
                     new Runner(host, port, token).Run();
-                }catch(Exception e)
+                }
+                catch(Exception e)
                 {
                    Console.Error.WriteLine(e.Message);
                    //break; 

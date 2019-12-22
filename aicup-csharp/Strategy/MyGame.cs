@@ -13,7 +13,6 @@ namespace aicup2019.Strategy
 
         public List<MyPosition> AllWalls = new List<MyPosition>();
 
-
         public MyGame(Game game, Unit me)
         {
             Game = game;

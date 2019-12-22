@@ -6,7 +6,7 @@
 // Dist service som har høyde og lengde man har vært i lufta.
 // Dist i dist service er bassert på tid fra hopp. Mindre dist om man kan være i lufta? Nei fordi langs bakken gir mye ekstra score.
 //TODO: Add collision with healing if life is below 70% at the start?
-Maybe add 
+
 //TODO: Collision med life om fiende har bazooka? Eller det er miner i omegn?
 //TODO: Jump eget tree også? Blir kanskje litt far fetched..
 //TODO: Make independent tree for shooting? Blir ikke så påvirket av mine moves
@@ -16,6 +16,7 @@ Maybe add
 //TODO: Ser da om fiende kan treffe meg med 1 kule.
 //TODO: Husk å redusere skade?
 //TODO: Verify jump pad sim.
+//TODO: Use different DepthPerMove 1,2,3,4,5,6,7
 
 foreach(var u in sim.Units)
 {

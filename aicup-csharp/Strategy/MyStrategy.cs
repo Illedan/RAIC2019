@@ -23,36 +23,26 @@ public class MyStrategy
             return CreateAction(m_lastGame.Units.First(u => u.unit.Id == unit.Id), m_lastGame);
         }
 
-        Const.Reset(game.Properties);
+        Const.Reset(game.Properties, game);
         Debug = debug;
         var myGame = new MyGame(game, unit);
         var sim = m_lastGame = new SimGame(myGame, unit);
         m_lastTick = game.CurrentTick;
         DistService.CalcDists(sim);
+        ShootService.Initialize(sim);
         foreach (var b in sim.Bullets) b.CalcCollisionTime(sim);
-
-        //TODO: Add collision with healing if life is below 70%?
-        //TODO: Collision med life om fiende har bazooka? Eller det er miner i omegn?
-        //TODO: Jump eget tree også? Blir kanskje litt far fetched..
-        //TODO: Make independent tree for shooting? Blir ikke så påvirket av mine moves
-        //TODO: Hva skal shooting skyte på? Nærmeste posisjoner fiende kan være på?
-        //TODO: Første omgang er det nok å simme at fiende kan skyte 1 kule av Rocket. Slik at eg minimerer skade
-        //TODO: Så ser vi hvor mye Spread faktisk har å si.
-        //TODO: Ser da om fiende kan treffe meg med 1 kule.
-        //TODO: Husk å redusere skade?
-        //TODO: Verify jump pad sim.
 
         foreach(var u in sim.Units)
         {
-            //TODO: All these needs to knpw what the enemy wants too?
-            //u.AimTarget = AimService.GetAimTarget(myGame);
-            //u.Shoot = ShootService.ShouldShoot(myGame, u.AimTarget);
-            u.WalkTarget = WalkService.FindWalkTarget(myGame);
+            u.WalkTarget = WalkService.FindWalkTarget(sim, u);
             u.AimTarget = AimService.GetAimTarget(myGame, u);
-            u.Shoot = ShootService.ShouldShoot(myGame, u.AimTarget);
+            u.Shoot = ShootService.ShouldShoot(sim, u);
         }
 
-        if(game.CurrentTick % 600 == 0)
+        MCTSService.Search(sim);
+        MCTSService.DoOneRound(sim, true);
+
+        if (game.CurrentTick % 600 == 0)
             Console.Error.WriteLine("Time: " + Const.GetTime + " Evals: " + Const.Evals + " Sims: " + Const.Sims);
 
         return CreateAction(m_lastGame.Units.First(u => u.unit.Id == unit.Id), m_lastGame);
@@ -72,9 +62,9 @@ public class MyStrategy
         action.JumpDown = selectedAction.JumpDown;
         action.Aim = new Vec2Double(aim.X -pos.X, aim.Y - pos.Y);
         action.Shoot = shoot;
-        action.Reload = !shoot && pos.Dist(targetPos) > 5 && unit.HasWeapon && me.Weapon.Magazine < me.Weapon.Parameters.MagazineSize * 0.3;
-        action.SwapWeapon = SwapService.ShouldSwap(game);
-        action.PlantMine = myGame.Me.Center.Dist(myGame.Enemy.Center) < 3;
+        action.Reload = !shoot && unit.HasWeapon && pos.Dist(targetPos) > 5 && unit.HasWeapon && unit.Weapon.Magazine < unit.Weapon.Parameters.MagazineSize * 0.3;
+        action.SwapWeapon = SwapService.ShouldSwap(game, unit);
+        action.PlantMine = unit.Position.Dist(unit.TargetEnemy.Position) < 3;
         return action;
     }
 }

@@ -12,12 +12,16 @@ namespace aicup2019.Strategy.Sim
         public double JumpSpeed => Const.Properties.UnitJumpSpeed;
 
         public List<SearchNode> Nodes = MyAction.Actions.Select(a => new SearchNode(a)).ToList();
-        private SearchNode CurrentNode;
-        public readonly Unit unit;
+        public SearchNode CurrentNode;
+        public readonly Unit unit, Unit;
         public MyPosition Position, _position;
-        public int Health, _health;
+        public int Health, _health, MaxHealth;
+
         public WeaponType WeaponType;
-        public double HalfWidth, HalffHeight, JumpTime, _jumpTime, Speed, Score,
+        public double HalfWidth, HalffHeight, 
+            JumpTime, _jumpTime, 
+            Speed, 
+            Score,
             FireTimer, _fireTimer, MaxFireTimer, Spread, _spread, MaxSpread, MinSpread, SpreadChange, Recoil, AimAngle, _aimAngle;
         public bool IsDead, CanJump, CanCancel;
         public int TeamId, Id;
@@ -25,21 +29,28 @@ namespace aicup2019.Strategy.Sim
 
         public MyPosition WalkTarget, AimTarget;
         public bool Shoot;
+        public bool NeedsHealing => Health < MaxHealth;
 
+        public MyAction CurrentAction;
         public SimUnit Allied;
         public List<SimUnit> Enemies;
         public bool HasWeapon;
+        public Weapon Weapon;
+        public SimUnit TargetEnemy;
 
         public SimPlayer Player;
 
         public SimUnit(Unit unit)
         {
-            this.unit = unit;
+            MaxHealth = Const.Properties.UnitMaxHealth;
+            Unit = this.unit = unit;
             Id = unit.Id;
             HasWeapon = unit.Weapon.HasValue;
+            Weapon = HasWeapon ? unit.Weapon.Value : new Weapon();
             WeaponType = unit.Weapon.HasValue ? unit.Weapon.Value.Typ : WeaponType.Pistol;
             MaxFireTimer = unit.Weapon.HasValue ? unit.Weapon.Value.Parameters.FireRate : 10000;
-            FireTimer = _fireTimer = unit.Weapon.HasValue ? unit.Weapon.Value.FireTimer.Value : 10000;
+
+            FireTimer = _fireTimer = unit.Weapon.HasValue ? (unit.Weapon.Value.FireTimer ?? 0) : 10000;
             TeamId = unit.PlayerId;
             Health = _health = unit.Health;
             HalfWidth = unit.Size.X / 2;
@@ -60,20 +71,22 @@ namespace aicup2019.Strategy.Sim
 
         public void AfterRound()
         {
+            Score += Health * 100000;
             CurrentNode.Update(Score);
         }
 
-        public MyAction GetNextMove(int depth)
+        public void GetNextMove(int depth)
         {
             if(depth == 0)
             {
                 CurrentNode = GetRnd();
-                return CurrentNode.Action;
+                CurrentAction = CurrentNode.Action;
+                return;
             }
 
             //TODO: Check with and without rnd.
-            if (Const.rnd.NextDouble() < 0.5) return CurrentNode.Action;
-            return GetRnd().Action;
+            if (Const.rnd.NextDouble() < 0.5) CurrentAction = CurrentNode.Action;
+            CurrentAction = GetRnd().Action;
         }
 
         public MyAction GetBestNode()
@@ -92,6 +105,7 @@ namespace aicup2019.Strategy.Sim
             Score = 0.0;
             FireTimer = _fireTimer;
             AimAngle = _aimAngle;
+            Spread = _spread;
         }
 
         private SearchNode GetRnd() => Nodes[Const.rnd.Next(Nodes.Count)];

@@ -9,8 +9,7 @@ namespace aicup2019.Strategy.Services
         public static MyPosition GetAimTarget(MyGame game, SimUnit unit)
         {
             var pos = unit.Position;
-            var enemies = unit.Enemies.OrderBy(e => e.Position.Dist(pos) + e.Health*0.01).ToList();
-            var targetPos = enemies.First().Position;
+            var targetPos = unit.TargetEnemy.Position;
             if (!unit.HasWeapon) return targetPos;
             var dist = pos.Dist(targetPos);
             var requested = unit.WeaponType == AiCup2019.Model.WeaponType.RocketLauncher ? GetClosestGround(game, targetPos) : targetPos;
@@ -21,7 +20,9 @@ namespace aicup2019.Strategy.Services
             if (Math.Abs(angle - prevAngle) < 0.05 || unit.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.1) angle = prevAngle;
             var dx = Math.Cos(angle)*dist;
             var dy = Math.Sin(angle)*dist;
-            return new MyPosition(pos.X + dx, pos.Y + dy);
+            var target = new MyPosition(pos.X + dx, pos.Y + dy);
+            LogService.DrawLine(target, unit.Position, 1, 0, 0);
+            return target;
         }
 
         public static MyPosition GetClosestGround(MyGame game, MyPosition targetPos) 
@@ -44,8 +45,9 @@ namespace aicup2019.Strategy.Services
             return best;
         }
 
-        public static MyPosition[] GetSpread(MyPosition aim, SimUnit unit)
+        public static MyPosition[] GetSpread(SimUnit unit)
         {
+            var aim = unit.AimTarget;
             var pos = unit.Position;
             if (!unit.HasWeapon) return new MyPosition[0];
             var angle = Math.Atan2(aim.Y - pos.Y, aim.X - pos.X);

@@ -41,6 +41,10 @@ namespace aicup2019.Strategy.Sim
             }
             Players[0].EnemyPlayer = Players[1];
             Players[1].EnemyPlayer = Players[0];
+            foreach(var u in Units)
+            {
+                u.TargetEnemy = u.Enemies.OrderBy(e => e.Position.Dist(u.Position) + e.Health * 0.01).First();
+            }
         }
 
         public Tile GetTileD(double x, double y) => GetTile((int)x, (int)y);

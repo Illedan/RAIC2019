@@ -1,20 +1,28 @@
 ﻿using System;
 using AiCup2019.Model;
 using System.Diagnostics;
+using System.Linq;
 
 namespace aicup2019.Strategy
 {
     public static class Const
     {
         public static Properties Properties;
-        public static int Evals, Sims;
-        public static int Steps = 5, Depth = 7, DepthPerMove = 5;
+        public static int Evals, Sims, Width, Height;
+        public static int Steps = 5, Depth = 10, DepthPerMove = 5;
         public static double Time;
         public static Stopwatch Stopwatch;
         public static Random rnd = new Random();
 
-        public static void Reset(Properties properties)
+        public static int GetPos(int x, int y) => Width * y + x;
+        public static double HalfUnitHeight, HalfUnitWidth;
+
+        public static void Reset(Properties properties, Game game)
         {
+            HalfUnitWidth = game.Units.First().Size.X / 2;
+            HalfUnitHeight = game.Units.First().Size.Y / 2;
+            Width = game.Level.Tiles.Length;
+            Height = game.Level.Tiles[0].Length;
             Evals = Sims = 0;
             Properties = properties;
             Time = 1.0 / Properties.TicksPerSecond / Steps;

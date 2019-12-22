@@ -1,6 +1,6 @@
 (
     view_speed: 2,
-    volume: 0.41708984375,
+    volume: 0,
     renderer: (
         mode: Fancy,
     ),
