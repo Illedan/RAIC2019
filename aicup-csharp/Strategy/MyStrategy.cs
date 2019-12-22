@@ -16,7 +16,7 @@ public class MyStrategy
     private static SimGame m_lastGame;
     public UnitAction GetAction(Unit unit, Game game, AiCup2019.Debug debug)
     {
-        if(m_lastTick >= game.CurrentTick-1) // Verify this number
+        if(m_lastTick >= game.CurrentTick) // Verify this number
         {
             //TODO: Check number of bullets
             LogService.WriteLine("Cached choice");
@@ -39,6 +39,7 @@ public class MyStrategy
             u.Shoot = ShootService.ShouldShoot(sim, u);
         }
 
+        LogService.WriteLine("FIRETIMER: " + m_lastGame.Units.First(u => u.unit.Id == unit.Id).FireTimer);
         MCTSService.Search(sim);
         MCTSService.DoOneRound(sim, true);
 

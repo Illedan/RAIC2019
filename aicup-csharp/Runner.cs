@@ -66,7 +66,13 @@ namespace AiCup2019
                 }
                 catch(Exception e)
                 {
-                   Console.Error.WriteLine(e.Message);
+                    if (e.StackTrace.Contains("Socket"))
+                    {
+                        await Task.Delay(100);
+                        continue;
+                    }
+
+                    Console.Error.WriteLine(e.Message + " " + e.StackTrace);
                    //break; 
                     await Task.Delay(100);
                 }

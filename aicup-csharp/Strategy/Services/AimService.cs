@@ -21,7 +21,7 @@ namespace aicup2019.Strategy.Services
             var dx = Math.Cos(angle)*dist;
             var dy = Math.Sin(angle)*dist;
             var target = new MyPosition(pos.X + dx, pos.Y + dy);
-            LogService.DrawLine(target, unit.Position, 1, 0, 0);
+            //LogService.DrawLine(target, unit.Position, 1, 0, 0);
             return target;
         }
 

@@ -38,7 +38,7 @@ namespace aicup2019.Strategy.Services
                 }
             }
 
-           //LogService.DrawLine(target, unit.Position, 1, 0, 0);
+           LogService.DrawLine(target, unit.Position, 1, 0, 0);
             return target;
         }
 

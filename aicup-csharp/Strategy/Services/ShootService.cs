@@ -31,12 +31,13 @@ namespace aicup2019.Strategy.Services
 
         public static bool CanShootAt(MyPosition pos, MyPosition target)
         {
-            var y =(int)target.Y;
-            var y2 = (int)(target.Y + Const.HalfUnitHeight);
-            if (y == y2) return canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y)];
-
-            return canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y)] ||
-                canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y2)];
+            return true;
+           //var y =(int)target.Y;
+           //var y2 = (int)(target.Y + Const.HalfUnitHeight);
+           //if (y == y2) return canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y)];
+		   //
+           //return canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y)] ||
+           //    canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y2)];
         }
 
         public static double GetShootTime(double dist, double speed)

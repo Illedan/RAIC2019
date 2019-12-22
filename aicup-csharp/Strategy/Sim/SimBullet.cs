@@ -78,7 +78,7 @@ namespace aicup2019.Strategy.Sim
                 if (IsCollidingWith(unit))
                 {
                     if (bullet.ExplosionParameters != null) Explode(game);
-                    unit.Health -= bullet.Damage;
+                    unit.Health -= IsSimCreated ? bullet.Damage / 2 : bullet.Damage;
                     IsDead = true;
                     return;
                 }
@@ -105,11 +105,12 @@ namespace aicup2019.Strategy.Sim
 
         public void Explode(SimGame game)
         {
+            var dmg = IsSimCreated ? bullet.ExplosionParameters.Value.Damage / 2 : bullet.ExplosionParameters.Value.Damage;
             foreach (var unit in game.Units)
             {
                 if (Math.Abs(Position.X - unit.Position.X) > bullet.ExplosionParameters.Value.Radius + HalfSize*2 + unit.HalfWidth
                     || Math.Abs(Position.Y - unit.Position.Y) > bullet.ExplosionParameters.Value.Radius + HalfSize*2 + unit.HalffHeight) continue;
-                unit.Health -= bullet.ExplosionParameters.Value.Damage;
+                unit.Health -= dmg;
             }
 
             //TODO: Explode mines

@@ -2,6 +2,7 @@
 using AiCup2019.Model;
 using System.Diagnostics;
 using System.Linq;
+using aicup2019.Strategy.Sim;
 
 namespace aicup2019.Strategy
 {
@@ -29,6 +30,7 @@ namespace aicup2019.Strategy
             Stopwatch = Stopwatch.StartNew();
             m_isDone = false;
             m_count = 0;
+            BulletFactory.Initialize();
         }
 
         private static bool m_isDone;

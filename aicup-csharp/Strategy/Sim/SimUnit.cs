@@ -132,7 +132,7 @@ namespace aicup2019.Strategy.Sim
 
         public void Fire(MyPosition target, SimGame game)
         {
-            if (!HasWeapon) return;
+            if (!HasWeapon || FireTimer > 0) return;
 
             var newAngle = Math.Atan2(target.Y - Position.Y, target.X - Position.X);
             var diff = Math.Abs(AimAngle - newAngle);
@@ -249,6 +249,9 @@ namespace aicup2019.Strategy.Sim
 
             Position.X = x;
             Position.Y = y;
+
+            if (canChange && Position.Dist(TargetEnemy.Position) < 5) 
+                Fire(TargetEnemy.Position, game);
         }
     }
 }
