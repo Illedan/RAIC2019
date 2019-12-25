@@ -22,13 +22,14 @@ namespace aicup2019.Strategy.Sim
             JumpTime, _jumpTime, 
             Speed, 
             Score,
+            ReloadTime,
             FireTimer, _fireTimer, MaxFireTimer, Spread, _spread, MaxSpread, MinSpread, SpreadChange, Recoil, AimAngle, _aimAngle;
-        public bool IsDead, CanJump, CanCancel;
-        public int TeamId, Id;
+        public bool IsDead, CanJump, CanCancel, debug, DidTouch;
+        public int TeamId, Id, Magazine, Rounds, _rounds;
         public Rect Rect => Rect.FromUnit(unit);
 
         public MyPosition WalkTarget, AimTarget;
-        public bool Shoot;
+        public bool Shoot, IsMine;
         public bool NeedsHealing => Health < MaxHealth;
 
         public MyAction CurrentAction;
@@ -49,6 +50,9 @@ namespace aicup2019.Strategy.Sim
             Weapon = HasWeapon ? unit.Weapon.Value : new Weapon();
             WeaponType = unit.Weapon.HasValue ? unit.Weapon.Value.Typ : WeaponType.Pistol;
             MaxFireTimer = unit.Weapon.HasValue ? unit.Weapon.Value.Parameters.FireRate : 10000;
+            Rounds = _rounds = HasWeapon ? unit.Weapon.Value.Magazine : 0;
+            Magazine = HasWeapon ? unit.Weapon.Value.Parameters.MagazineSize : 0;
+            ReloadTime = HasWeapon ? unit.Weapon.Value.Parameters.ReloadTime : 1;
 
             FireTimer = _fireTimer = unit.Weapon.HasValue ? (unit.Weapon.Value.FireTimer ?? 0) : 10000;
             TeamId = unit.PlayerId;
@@ -71,8 +75,17 @@ namespace aicup2019.Strategy.Sim
 
         public void AfterRound()
         {
-            Score += Health * 100000;
-            CurrentNode.Update(Score);
+            var extra = 0.0;
+
+            foreach (var enemy in Enemies)
+            {
+                extra -= enemy.Health * 100000;
+            }
+
+            if (Allied != null)
+                extra += Allied.Score * 0.5 + Health * 50000;
+
+            CurrentNode.Update(Score + extra);
         }
 
         public void GetNextMove(int depth)
@@ -80,13 +93,26 @@ namespace aicup2019.Strategy.Sim
             if(depth == 0)
             {
                 CurrentNode = GetRnd();
+                if (Const.Evals < 20)
+                {
+                    for(var i = 0; i < Nodes.Count; i++)
+                    {
+                        var n = Nodes[i];
+                        if (n.Usages < CurrentNode.Usages || n.Usages == CurrentNode.Usages && Const.rnd.NextDouble() < 0.10)
+                        {
+                            CurrentNode = n;
+                        }
+                    }
+                }
+
                 CurrentAction = CurrentNode.Action;
                 return;
             }
 
-            //TODO: Check with and without rnd.
-            if (Const.rnd.NextDouble() < 0.5) CurrentAction = CurrentNode.Action;
-            CurrentAction = GetRnd().Action;
+           if(depth == 1 && Const.rnd.NextDouble() < 0.10) CurrentAction = GetRnd().Action;
+           else CurrentAction = CurrentNode.Action;
+            //else if (Const.rnd.NextDouble() < 0.90) CurrentAction = CurrentNode.Action;
+            //else CurrentAction = GetRnd().Action;
         }
 
         public MyAction GetBestNode()
@@ -106,6 +132,8 @@ namespace aicup2019.Strategy.Sim
             FireTimer = _fireTimer;
             AimAngle = _aimAngle;
             Spread = _spread;
+            Rounds = _rounds;
+            DidTouch = false;
         }
 
         private SearchNode GetRnd() => Nodes[Const.rnd.Next(Nodes.Count)];
@@ -132,7 +160,8 @@ namespace aicup2019.Strategy.Sim
 
         public void Fire(MyPosition target, SimGame game)
         {
-            if (!HasWeapon || FireTimer > 0) return;
+            if (!HasWeapon || FireTimer > 0 || Rounds <= 0) 
+                return;
 
             var newAngle = Math.Atan2(target.Y - Position.Y, target.X - Position.X);
             var diff = Math.Abs(AimAngle - newAngle);
@@ -142,11 +171,23 @@ namespace aicup2019.Strategy.Sim
                 if (newDiff < diff) diff = newDiff;
             }
             AimAngle = newAngle;
+            if (AimAngle < 0) AimAngle += Math.PI * 2;
+            else if (AimAngle > Math.PI * 2) AimAngle -= Math.PI * 2;
             Spread = Math.Max(MinSpread, Math.Min(MaxSpread, Spread + diff));
 
-            var bullets = BulletFactory.GetBullets(WeaponType, Position, newAngle, Id, AimAngle);
+            if(debug)
+                LogService.DrawLine(Position, new MyPosition(Position.X + Math.Cos(AimAngle) * 10, Position.Y + Math.Sin(AimAngle) * 10), 0, 0, 1);
+
+            var bullets = BulletFactory.GetBullets(WeaponType, Position, newAngle, Id, Spread);
             game.Bullets.AddRange(bullets);
             Spread += Recoil;
+            Rounds--;
+            FireTimer = MaxFireTimer;
+            if (Rounds <= 0)
+            {
+                FireTimer = ReloadTime;
+                Rounds = Magazine;
+            }
         }
 
         private bool m_jumpUp;
@@ -250,8 +291,13 @@ namespace aicup2019.Strategy.Sim
             Position.X = x;
             Position.Y = y;
 
-            if (canChange && Position.Dist(TargetEnemy.Position) < 5) 
-                Fire(TargetEnemy.Position, game);
+           //if (canChange && Position.Dist(TargetEnemy.Position) < 7 && ShootService.CanShootAt(Position, TargetEnemy.Position))
+           //{
+           //    //if (WeaponType != WeaponType.RocketLauncher || !IsMine)
+           //    {
+           //        Fire(TargetEnemy.Position, game);
+           //    }
+           //}
         }
     }
 }

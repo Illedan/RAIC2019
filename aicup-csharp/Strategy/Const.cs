@@ -10,13 +10,14 @@ namespace aicup2019.Strategy
     {
         public static Properties Properties;
         public static int Evals, Sims, Width, Height;
-        public static int Steps = 5, Depth = 10, DepthPerMove = 5;
+        public static int Steps = 5, Depth = 7, DepthPerMove = 5;
         public static double Time;
         public static Stopwatch Stopwatch;
         public static Random rnd = new Random();
 
         public static int GetPos(int x, int y) => Width * y + x;
         public static double HalfUnitHeight, HalfUnitWidth;
+        public static int MyId;
 
         public static void Reset(Properties properties, Game game)
         {
@@ -34,7 +35,7 @@ namespace aicup2019.Strategy
         }
 
         private static bool m_isDone;
-        public static long m_timeout = 10;
+        public static long m_timeout = 15;
         private static int m_count;
 
         public static bool IsDone()

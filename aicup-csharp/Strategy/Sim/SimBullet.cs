@@ -1,4 +1,5 @@
 ﻿using System;
+using aicup2019.Strategy.Services;
 using AiCup2019.Model;
 namespace aicup2019.Strategy.Sim
 {
@@ -22,6 +23,11 @@ namespace aicup2019.Strategy.Sim
             Dy = bullet.Velocity.Y;
             HalfSize = bullet.Size / 2 + bullet.Size * 0.1;
             ExplosionSize = bullet.ExplosionParameters.HasValue ? bullet.ExplosionParameters.Value.Radius : 0.0;
+        }
+
+        public void Draw()
+        {
+            LogService.DrawSquare(Position, HalfSize, HalfSize, 0.3f, 1, 0);
         }
 
         public void Reset()
@@ -53,8 +59,6 @@ namespace aicup2019.Strategy.Sim
 
         public bool CollidesWithWall(SimGame game)
         {
-            var x = Position.X;
-            var y = Position.Y;
             return CollidesWithWall(game, Position.X - HalfSize, Position.Y - HalfSize)
                 || CollidesWithWall(game, Position.X + HalfSize, Position.Y - HalfSize)
                 || CollidesWithWall(game, Position.X + HalfSize, Position.Y + HalfSize)
@@ -78,14 +82,13 @@ namespace aicup2019.Strategy.Sim
                 if (IsCollidingWith(unit))
                 {
                     if (bullet.ExplosionParameters != null) Explode(game);
-                    unit.Health -= IsSimCreated ? bullet.Damage / 2 : bullet.Damage;
+                    unit.Health -= IsSimCreated ? bullet.Damage / 10 : bullet.Damage;
                     IsDead = true;
                     return;
                 }
             }
 
             //TODO: Check mines
-
 
             if ((_collisionTime < 999999 && CollidesWithWall(game)) || CollisionTime <= 0)
             {
@@ -105,7 +108,7 @@ namespace aicup2019.Strategy.Sim
 
         public void Explode(SimGame game)
         {
-            var dmg = IsSimCreated ? bullet.ExplosionParameters.Value.Damage / 2 : bullet.ExplosionParameters.Value.Damage;
+            var dmg = IsSimCreated ? bullet.ExplosionParameters.Value.Damage / 10 : bullet.ExplosionParameters.Value.Damage;
             foreach (var unit in game.Units)
             {
                 if (Math.Abs(Position.X - unit.Position.X) > bullet.ExplosionParameters.Value.Radius + HalfSize*2 + unit.HalfWidth

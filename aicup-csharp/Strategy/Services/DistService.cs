@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using aicup2019.Strategy.Sim;
 using System.Linq;
+using System.Diagnostics;
 namespace aicup2019.Strategy.Services
 {
     public static class DistService
@@ -28,7 +29,7 @@ namespace aicup2019.Strategy.Services
                     var xx = (int)p1.X + dxes[i];
                     var yy = (int)p1.Y + dyes[i];
                     if (!Game.OnBoard(xx, yy) || Game.GetTile(xx, yy) == AiCup2019.Model.Tile.Wall) continue;
-                    LogService.DrawLineBetweenCenter(p1, new MyPosition(xx, yy), 0, 0, 1);
+                    //LogService.DrawLineBetweenCenter(p1, new MyPosition(xx, yy), 0, 0, 1);
                     var newPos = new MyPosition(xx, yy);
                     var dist = GetDist(p2, newPos);
                     if(dist < bestDist)
@@ -37,7 +38,7 @@ namespace aicup2019.Strategy.Services
                         bestDist = dist;
                     }
                 }
-                //LogService.DrawLineBetweenCenter(p1, best, 0, 0, 1);
+                LogService.DrawLineBetweenCenter(p1, best, 0, 0, 1);
                 p1 = best;
             }
         }
@@ -99,6 +100,7 @@ namespace aicup2019.Strategy.Services
                 }
             }
             Console.Error.WriteLine("Dist time: " + (Const.GetTime - t));
+            Const.Stopwatch = Stopwatch.StartNew();
         }
 
         private static int FindDists(int x, int y)

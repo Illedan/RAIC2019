@@ -6,18 +6,26 @@ namespace aicup2019.Strategy.Services
 {
     public static class AimService
     {
-        public static MyPosition GetAimTarget(MyGame game, SimUnit unit)
+        public static MyPosition GetAimTarget(SimGame game, SimUnit unit)
         {
             var pos = unit.Position;
             var targetPos = unit.TargetEnemy.Position;
             if (!unit.HasWeapon) return targetPos;
+            foreach(var e in unit.Enemies.OrderBy(e => e.Position.Dist(unit.Position)))
+            {
+                if (ShootService.CanHitDirect(unit.Position, e.Position, game, unit))
+                {
+                    targetPos = e.Position;
+                    break;
+                }
+            }
             var dist = pos.Dist(targetPos);
-            var requested = unit.WeaponType == AiCup2019.Model.WeaponType.RocketLauncher ? GetClosestGround(game, targetPos) : targetPos;
+            var requested = unit.WeaponType == AiCup2019.Model.WeaponType.RocketLauncher ? GetClosestGround(game.game, targetPos) : targetPos;
             if (dist < 3 || Math.Abs(targetPos.Y-pos.Y) < 0.1) requested = targetPos;
 
             var angle = Math.Atan2(requested.Y - pos.Y, requested.X - pos.X);
             var prevAngle = unit.AimAngle;
-            if (Math.Abs(angle - prevAngle) < 0.05 || unit.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.1) angle = prevAngle;
+            if (Math.Abs(angle - prevAngle) < 0.1 || unit.FireTimer > 0 && Math.Abs(angle - prevAngle) < 0.2) angle = prevAngle;
             var dx = Math.Cos(angle)*dist;
             var dy = Math.Sin(angle)*dist;
             var target = new MyPosition(pos.X + dx, pos.Y + dy);

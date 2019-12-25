@@ -35,18 +35,25 @@ public class MyStrategy
         foreach(var u in sim.Units)
         {
             u.WalkTarget = WalkService.FindWalkTarget(sim, u);
-            u.AimTarget = AimService.GetAimTarget(myGame, u);
+            u.AimTarget = AimService.GetAimTarget(sim, u);
             u.Shoot = ShootService.ShouldShoot(sim, u);
+            if(u.Player.Id == unit.PlayerId)
+            {
+                u.IsMine = true;
+            }
         }
 
         LogService.WriteLine("FIRETIMER: " + m_lastGame.Units.First(u => u.unit.Id == unit.Id).FireTimer);
         MCTSService.Search(sim);
-        MCTSService.DoOneRound(sim, true);
+       //foreach (var u in sim.Units) u.debug = true;
+       //MCTSService.DoOneRound(sim, true);
+       //foreach (var u in sim.Units) u.debug = false;
 
-        if (game.CurrentTick % 600 == 0)
+        if (game.CurrentTick % 300 == 10)
             Console.Error.WriteLine("Time: " + Const.GetTime + " Evals: " + Const.Evals + " Sims: " + Const.Sims);
-
-        return CreateAction(m_lastGame.Units.First(u => u.unit.Id == unit.Id), m_lastGame);
+        var targetUnit = m_lastGame.Units.First(u => u.unit.Id == unit.Id);
+        DistService.DrawPath(targetUnit.Position, targetUnit.WalkTarget);
+        return CreateAction(targetUnit, m_lastGame);
     }
 
     private static UnitAction CreateAction(SimUnit unit, SimGame game)
@@ -57,15 +64,18 @@ public class MyStrategy
         var shoot = unit.Shoot;
         var enemies = unit.Enemies.OrderBy(e => e.Position.Dist(pos) + e.Health * 0.01).ToList();
         var targetPos = enemies.First().Position;
-        UnitAction action = new UnitAction();
-        action.Velocity = selectedAction.Dx * Const.Properties.UnitMaxHorizontalSpeed;
-        action.Jump = selectedAction.JumpUp;
-        action.JumpDown = selectedAction.JumpDown;
-        action.Aim = new Vec2Double(aim.X -pos.X, aim.Y - pos.Y);
-        action.Shoot = shoot;
-        action.Reload = !shoot && unit.HasWeapon && pos.Dist(targetPos) > 5 && unit.HasWeapon && unit.Weapon.Magazine < unit.Weapon.Parameters.MagazineSize * 0.3;
-        action.SwapWeapon = SwapService.ShouldSwap(game, unit);
-        action.PlantMine = unit.Position.Dist(unit.TargetEnemy.Position) < 3;
+        UnitAction action = new UnitAction
+        {
+            Velocity = selectedAction.Dx * Const.Properties.UnitMaxHorizontalSpeed,
+            Jump = selectedAction.JumpUp,
+            JumpDown = selectedAction.JumpDown,
+            Aim = new Vec2Double(aim.X - pos.X, aim.Y - pos.Y),
+            Shoot = shoot,
+            Reload = !shoot && unit.HasWeapon && pos.Dist(targetPos) > 5 && unit.HasWeapon && unit.Weapon.Magazine < unit.Weapon.Parameters.MagazineSize * 0.3,
+            SwapWeapon = SwapService.ShouldSwap(game, unit),
+            PlantMine = unit.Position.Dist(unit.TargetEnemy.Position) < 3
+        };
+
         return action;
     }
 }

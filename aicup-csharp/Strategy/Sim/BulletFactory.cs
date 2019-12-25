@@ -31,17 +31,13 @@ namespace aicup2019.Strategy.Sim
             if (Amount == 1)
             {
                 FlyToTarget(bullets[0], angle, start, unitId);
+                return bullets;
             }
-           //var min = angle - spread;
-           //var max = angle + spread;
-		   //
-           //var dist = target.Dist(start);
-           //foreach(var b in bullets)
-           //{
-           //    b.UnitId = unitId;
-           //    b.Position.UpdateFrom(start);
-           //    b.dx
-           //}
+            FlyToTarget(bullets[0], angle - spread * 0.5, start, unitId);
+            FlyToTarget(bullets[1], angle, start, unitId);
+            FlyToTarget(bullets[2], angle + spread * 0.5, start, unitId);
+            FlyToTarget(bullets[3], angle - spread, start, unitId);
+            FlyToTarget(bullets[4], angle + spread, start, unitId);
             return bullets;
         }
 

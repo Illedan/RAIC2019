@@ -18,7 +18,7 @@ namespace aicup2019.Strategy.Services
             if (rect.Overlapping(unit.Rect) && unit.WeaponType != weapon.WeaponType)
             {
                 if (weapon.WeaponType == WeaponType.AssaultRifle) return true;
-                if (weapon.WeaponType == WeaponType.RocketLauncher) return true;
+                if (weapon.WeaponType == WeaponType.Pistol) return true;
                 //return weapon.WeaponType > game.Me.Weapon.Typ;
             }
             return false;

@@ -13,12 +13,44 @@ namespace aicup2019.Strategy.Services
         public static void Initialize(SimGame game)
         {
             if (m_isRun) return;
+            var t = Const.GetTime;
             m_isRun = true;
             var max = Const.Width * Const.Height;
             canShootMap = new bool[max, max];
 
+            for(var x = 0; x < Const.Width; x++)
+            {
+                for(var y = 0; y < Const.Height; y++)
+                {
+                    if (game.GetTile(x, y) == Tile.Wall) continue;
+                    Init(x, y, game);
+                }
+            }
+            Console.Error.WriteLine("Shoot time: " + (Const.GetTime - t));
         }
 
+        private static int[] dyes = new int[] { 0, 0, -1, 1 };
+        private static int[] dxes = new int[] { -1, 1, 0, 0 };
+
+        private static void Init(int startX, int startY, SimGame game)
+        {
+            var pos = Const.GetPos(startX, startY);
+            for(var i = 0; i < 360; i+= 1)
+            {
+                var angle = i / 180 * Math.PI;
+                var dx = Math.Cos(angle);
+                var dy = Math.Sin(angle);
+                for(var s = 0.0; s < 10; s += 0.3)
+                {
+                    var x = (int)(startX + dx * s);
+                    var y = (int)(startY + dy * s);
+                    if (game.GetTile(x, y) == Tile.Wall) break;
+                    var pos2 = Const.GetPos(x, y);
+                    canShootMap[pos, pos2] = true;
+                    canShootMap[pos2, pos] = true;
+                }
+            }
+        }
 
         public static bool ShouldShoot(SimGame game, SimUnit unit)
         {
@@ -31,13 +63,12 @@ namespace aicup2019.Strategy.Services
 
         public static bool CanShootAt(MyPosition pos, MyPosition target)
         {
-            return true;
-           //var y =(int)target.Y;
-           //var y2 = (int)(target.Y + Const.HalfUnitHeight);
-           //if (y == y2) return canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y)];
-		   //
-           //return canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y)] ||
-           //    canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y2)];
+           var y = (int)target.Y;
+           var y2 = (int)(target.Y + Const.HalfUnitHeight);
+           if (y == y2) return canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y)];
+		   
+           return canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y)] ||
+               canShootMap[Const.GetPos((int)pos.X, (int)pos.Y), Const.GetPos((int)target.X, y2)];
         }
 
         public static double GetShootTime(double dist, double speed)
@@ -54,15 +85,15 @@ namespace aicup2019.Strategy.Services
         public static bool CanShoot(MyPosition startPos, MyPosition endPos, SimGame game, SimUnit unit, double bulletSpeed)
         {
             var hitPos = GetHitPos(startPos, endPos, game, bulletSpeed, unit);
-            if(unit.WeaponType == WeaponType.RocketLauncher)
+            var spread = AimService.GetSpread(unit);
+            var posses = spread.Select(s => GetHitPos(startPos, s, game, bulletSpeed, unit)).ToArray();
+            foreach (var p in posses)
             {
-                var spread = AimService.GetSpread(unit);
-                var posses = spread.Select(s => GetHitPos(startPos, s, game, bulletSpeed, unit)).ToArray();
-                foreach(var p in posses)
-                {
-                    LogService.DrawLine(p, unit.Position, 0, 0, 1);
-                }
+                LogService.DrawLine(p, unit.Position, 0, 0, 1);
+            }
 
+            if (unit.WeaponType == WeaponType.RocketLauncher)
+            {
                 if (posses.Any(p => p.Dist(unit.TargetEnemy.Position) > p.Dist(unit.Position) && p.Dist(endPos) > unit.Weapon.Parameters.Explosion.Value.Radius-1))
                     return false;
 
@@ -72,10 +103,16 @@ namespace aicup2019.Strategy.Services
             return hitPos.Dist(endPos) < 1;
         }
 
+        public static bool CanHitDirect(MyPosition startPos, MyPosition endPos, SimGame game, SimUnit firering)
+        {
+            var hitPos = GetHitPos(startPos, endPos, game, 5, firering);
+            return hitPos.Dist(endPos) < 1;
+        }
+
         public static MyPosition GetHitPos(MyPosition startPos, MyPosition endPos, SimGame game, double bulletSpeed, SimUnit firering, bool stopOnEnd = true)
         {
             var dist = endPos.Dist(startPos);
-            var time = GetShootTime(dist, bulletSpeed) * Const.Properties.TicksPerSecond * 100;
+            var time = GetShootTime(dist, bulletSpeed) * Const.Properties.TicksPerSecond * 15;
             var dx = (endPos.X - startPos.X) / time;
             var dy = (endPos.Y - startPos.Y) / time;
             var x = startPos.X;
