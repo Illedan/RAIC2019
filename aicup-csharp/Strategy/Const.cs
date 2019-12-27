@@ -10,7 +10,7 @@ namespace aicup2019.Strategy
     {
         public static Properties Properties;
         public static int Evals, Sims, Width, Height;
-        public static int Steps = 5, Depth = 7, DepthPerMove = 5;
+        public static int Steps = 5, Depth = 10, DepthPerMove = 5;
         public static double Time;
         public static Stopwatch Stopwatch;
         public static Random rnd = new Random();

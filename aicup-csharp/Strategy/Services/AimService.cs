@@ -10,7 +10,8 @@ namespace aicup2019.Strategy.Services
         {
             var pos = unit.Position;
             var targetPos = unit.TargetEnemy.Position;
-            if (!unit.HasWeapon) return targetPos;
+            //if (!unit.HasWeapon)
+            return targetPos;
             foreach(var e in unit.Enemies.OrderBy(e => e.Position.Dist(unit.Position)))
             {
                 if (ShootService.CanHitDirect(unit.Position, e.Position, game, unit))

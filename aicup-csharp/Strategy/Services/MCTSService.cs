@@ -12,9 +12,6 @@ namespace aicup2019.Strategy.Services
         {
             while (!Const.IsDone())
             {
-                if (Const.Evals < 20) Const.Depth = 5;
-                else if (Const.Evals < 40) Const.Depth = 6;
-                else if (Const.Evals < 80) Const.Depth = 7;
                 DoOneRound(game);
             }
         }
@@ -27,10 +24,9 @@ namespace aicup2019.Strategy.Services
                 SimService.Simulate(game, i, draw);
                 if (draw)
                 {
-                    foreach(var b in game.Bullets)
+                    foreach(var u in game.Units)
                     {
-                        if (b.IsDead || !b.IsSimCreated) continue;
-                        b.Draw();
+                        u.Draw(u.Health < u._health);
                     }
                 }
             }

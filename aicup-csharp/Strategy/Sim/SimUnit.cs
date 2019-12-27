@@ -11,8 +11,7 @@ namespace aicup2019.Strategy.Sim
         public static double MaxJumpTime => Const.Properties.UnitJumpTime;
         public double JumpSpeed => Const.Properties.UnitJumpSpeed;
 
-        public List<SearchNode> Nodes = MyAction.Actions.Select(a => new SearchNode(a)).ToList();
-        public SearchNode CurrentNode;
+        public SimSolution SimSolution = new SimSolution();
         public readonly Unit unit, Unit;
         public MyPosition Position, _position;
         public int Health, _health, MaxHealth;
@@ -79,45 +78,40 @@ namespace aicup2019.Strategy.Sim
 
             foreach (var enemy in Enemies)
             {
-                extra -= enemy.Health * 100000;
+                extra -= enemy.Score * 0.5;
             }
 
             if (Allied != null)
-                extra += Allied.Score * 0.5 + Health * 50000;
+                extra += Allied.Score;// + Health * 5000;
 
-            CurrentNode.Update(Score + extra);
+            SimSolution.Score = Score + extra + Health * 5000;
+            SimSolution.AfterRound();
         }
 
         public void GetNextMove(int depth)
         {
             if(depth == 0)
             {
-                CurrentNode = GetRnd();
-                if (Const.Evals < 20)
+                if(Const.Evals < MyAction.Actions.Count)
                 {
-                    for(var i = 0; i < Nodes.Count; i++)
-                    {
-                        var n = Nodes[i];
-                        if (n.Usages < CurrentNode.Usages || n.Usages == CurrentNode.Usages && Const.rnd.NextDouble() < 0.10)
-                        {
-                            CurrentNode = n;
-                        }
-                    }
+                    SimSolution.SetFromMoves(Const.Evals);
                 }
-
-                CurrentAction = CurrentNode.Action;
-                return;
+                else if(Const.Evals % 20 == 15)
+                {
+                    // Every 20 evals, reset the best score so that we evolve with the enemy
+                    SimSolution.CloneBestIntoTemp();
+                    SimSolution.ResetBestScore();
+                }
+                else if (Const.rnd.NextDouble() < 0.3) SimSolution.Randomize();
+                else SimSolution.Mutate();
             }
 
-           if(depth == 1 && Const.rnd.NextDouble() < 0.10) CurrentAction = GetRnd().Action;
-           else CurrentAction = CurrentNode.Action;
-            //else if (Const.rnd.NextDouble() < 0.90) CurrentAction = CurrentNode.Action;
-            //else CurrentAction = GetRnd().Action;
+            CurrentAction = SimSolution.TempActions[depth];
         }
 
         public MyAction GetBestNode()
         {
-            return Nodes.OrderByDescending(n => n.AvreageScore).First().Action;
+            return SimSolution.BestActions[0];
         }
 
         public void Reset()
@@ -135,8 +129,6 @@ namespace aicup2019.Strategy.Sim
             Rounds = _rounds;
             DidTouch = false;
         }
-
-        private SearchNode GetRnd() => Nodes[Const.rnd.Next(Nodes.Count)];
 
         public void Draw(bool dmged)
         {
@@ -178,8 +170,8 @@ namespace aicup2019.Strategy.Sim
             if(debug)
                 LogService.DrawLine(Position, new MyPosition(Position.X + Math.Cos(AimAngle) * 10, Position.Y + Math.Sin(AimAngle) * 10), 0, 0, 1);
 
-            var bullets = BulletFactory.GetBullets(WeaponType, Position, newAngle, Id, Spread);
-            game.Bullets.AddRange(bullets);
+           //var bullets = BulletFactory.GetBullets(WeaponType, Position, newAngle, Id, Spread);
+            //game.Bullets.AddRange(bullets);
             Spread += Recoil;
             Rounds--;
             FireTimer = MaxFireTimer;
@@ -188,6 +180,8 @@ namespace aicup2019.Strategy.Sim
                 FireTimer = ReloadTime;
                 Rounds = Magazine;
             }
+
+            Score += 0.5 *  (MaxSpread-MinSpread) / Math.Max(0.01, Spread-MinSpread);
         }
 
         private bool m_jumpUp;
@@ -291,13 +285,13 @@ namespace aicup2019.Strategy.Sim
             Position.X = x;
             Position.Y = y;
 
-           //if (canChange && Position.Dist(TargetEnemy.Position) < 7 && ShootService.CanShootAt(Position, TargetEnemy.Position))
-           //{
-           //    //if (WeaponType != WeaponType.RocketLauncher || !IsMine)
-           //    {
-           //        Fire(TargetEnemy.Position, game);
-           //    }
-           //}
+           if (canChange && ShootService.CanShootAt(Position, TargetEnemy.Position))
+           {
+               //if (WeaponType != WeaponType.RocketLauncher || !IsMine)
+               {
+                   Fire(TargetEnemy.Position, game);
+               }
+           }
         }
     }
 }

@@ -29,9 +29,6 @@ namespace aicup2019.Strategy.Services
             Console.Error.WriteLine("Shoot time: " + (Const.GetTime - t));
         }
 
-        private static int[] dyes = new int[] { 0, 0, -1, 1 };
-        private static int[] dxes = new int[] { -1, 1, 0, 0 };
-
         private static void Init(int startX, int startY, SimGame game)
         {
             var pos = Const.GetPos(startX, startY);
@@ -44,7 +41,7 @@ namespace aicup2019.Strategy.Services
                 {
                     var x = (int)(startX + dx * s);
                     var y = (int)(startY + dy * s);
-                    if (game.GetTile(x, y) == Tile.Wall) break;
+                    if (game.GetTile(x, y) == Tile.Wall || !game.OnBoard(x, y)) break;
                     var pos2 = Const.GetPos(x, y);
                     canShootMap[pos, pos2] = true;
                     canShootMap[pos2, pos] = true;
@@ -54,8 +51,9 @@ namespace aicup2019.Strategy.Services
 
         public static bool ShouldShoot(SimGame game, SimUnit unit)
         {
-            if (!unit.HasWeapon || unit.FireTimer > 0) return false;
             LogService.WriteLine("FireTimer: " + unit.FireTimer);
+            if (!unit.HasWeapon) return false;
+           // return (CanShootAt(unit.Position, unit.TargetEnemy.Position));
             //if (me.Unit.Weapon.Value.Spread > me.Unit.Weapon.Value.Parameters.MinSpread + 0.1 && me.Center.Dist(aimPos) > 5) return false;
             if (!CanShoot(unit.Position, unit.AimTarget, game, unit, unit.Weapon.Parameters.Bullet.Speed)) return false;
             return true;

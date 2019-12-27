@@ -66,12 +66,13 @@ namespace aicup2019.Strategy.Services
 
         private static MyPosition Attack(MyGame game, SimUnit unit)
         {
-            var diff = 5;
-            if (game.Game.CurrentTick > 3000 && unit.Player.ScoreDiff <= 0) diff = 3;
-            var target = unit.TargetEnemy.Position.MoveTowards(unit.Position, diff);
-            if (target.X >= game.Width || target.X < 0) diff *= -1;
-            target = unit.TargetEnemy.Position.MoveTowards(unit.Position, diff);
-            return new MyPosition(target.X, Math.Min(target.Y, target.X));
+            return unit.TargetEnemy.Position;
+           //var diff = 5;
+           //if (game.Game.CurrentTick > 3000 && unit.Player.ScoreDiff <= 0) diff = 3;
+           //var target = unit.TargetEnemy.Position.MoveTowards(unit.Position, diff);
+           //if (target.X >= game.Width || target.X < 0) diff *= -1;
+           //target = unit.TargetEnemy.Position.MoveTowards(unit.Position, diff);
+           //return new MyPosition(target.X, Math.Min(target.Y, target.X));
         }
     }
 }

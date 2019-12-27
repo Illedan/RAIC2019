@@ -11,6 +11,8 @@ namespace aicup2019.Strategy.Services
         private static int[] dyes = new int[] { 0, 0, -1, 1 };
         public static bool m_isRun;
         public static int[,] Dists;
+        public static bool[] Ground;
+        public static bool[] Reachable;
         private static SimGame Game;
         // Find all reachable tiles.
 
@@ -84,14 +86,28 @@ namespace aicup2019.Strategy.Services
             m_isRun = true;
             var max = Game.game.Width * Game.game.Height;
             Dists = new int[max, max];
-            for (var i = 0; i< max; i++)
+            Ground = new bool[max];
+            for(var i = 0; i < game.game.Width; i++)
             {
-                for(var j = 0; j <max; j++)
+                for(var j = 1; j < game.game.Height; j++)
+                {
+                    if (game.game.GetTile(i, j) == AiCup2019.Model.Tile.Wall) 
+                        continue;
+
+                    var pos = Const.GetPos(i, j);
+                    Ground[pos] = game.game.GetTile(i, j-1) != AiCup2019.Model.Tile.Empty;
+                }
+            }
+
+            for (var i = 0; i < max; i++)
+            {
+                for(var j = 0; j < max; j++)
                 {
                     if (i == j) Dists[i, j] = 0;
                     else Dists[i, j] = 10000;
                 }
             }
+
             for (var i = 0; i < Game.game.Width; i++)
             {
                 for (var j = 0; j < Game.game.Height; j++)
@@ -103,15 +119,15 @@ namespace aicup2019.Strategy.Services
             Const.Stopwatch = Stopwatch.StartNew();
         }
 
-        private static int FindDists(int x, int y)
+        private static int FindDists(int x, int y, bool saveEm = false)
         {
             var tested = 0;
             var p = Game.GetPos(x, y);
-           // if (Game.Board[p] == AiCup2019.Model.Tile.Wall) return;
             var posses = new List<Node> { new Node { X = x, Y = y, Dist = 0 } };
             while(posses.Count > 0)
             {
                 var next = posses[0];
+                if (saveEm) Reachable[Const.GetPos(next.X, next.Y)] = true;
                 for(var i = 1; i < posses.Count; i++)
                 {
                     var pp = posses[i];

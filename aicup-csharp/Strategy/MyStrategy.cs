@@ -46,7 +46,7 @@ public class MyStrategy
         LogService.WriteLine("FIRETIMER: " + m_lastGame.Units.First(u => u.unit.Id == unit.Id).FireTimer);
         MCTSService.Search(sim);
        //foreach (var u in sim.Units) u.debug = true;
-       //MCTSService.DoOneRound(sim, true);
+       MCTSService.DoOneRound(sim, true); 
        //foreach (var u in sim.Units) u.debug = false;
 
         if (game.CurrentTick % 300 == 10)

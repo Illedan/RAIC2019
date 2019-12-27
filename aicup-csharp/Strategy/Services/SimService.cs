@@ -11,8 +11,7 @@ namespace aicup2019.Strategy.Services
                 unit.GetNextMove(depth);
             }
 
-            var dpm = 5;
-            var steps = Const.Steps * dpm;
+            var steps = Const.Steps * Const.DepthPerMove;
             Const.Sims += Const.DepthPerMove;
             var timer = 0;
             for (var s = 0; s < steps; s++)
@@ -33,20 +32,17 @@ namespace aicup2019.Strategy.Services
 
             foreach(var u in game.Units)
             {
-                //if (u.Health <= 0) LogService.WriteLine("dead");
                 if (draw)
                 {
                     u.Draw(u.Health < u._health);
                 }
                 if (u.DidTouch)
                 {
-                   //if(u.IsMine)
-                   //    LogService.WriteLine("TOUCH=!");
                     u.Score += DistService.GetDist(u.Position, u.WalkTarget);
                 }
                 else
                 {
-                    var d = DistService.GetDist(u.Position, u.WalkTarget);
+                    var d = DistService.GetDist(u.Position, u.WalkTarget) + Math.Abs(u.Position.X - u.WalkTarget.X)*0.5;
                     u.Score -= d;
                     if (d < 0.6) u.DidTouch = true;
                 }
@@ -65,10 +61,10 @@ namespace aicup2019.Strategy.Services
                             u.Score -= 1000;
                         }
                     }
-                    //else if (Math.Abs(u.Position.X - u2.Position.X) < 2 && Math.Abs(u.Position.Y - u2.Position.Y) < 3)
-                    //{
-                    //    u.Score -= 100;
-                    //}
+                    else if (Math.Abs(u.Position.X - u2.Position.X) < 3 && Math.Abs(u.Position.Y - u2.Position.Y) < 4)
+                    {
+                        u.Score -= 100;
+                    }
                 }
             }
         }
